@@ -1,0 +1,38 @@
+<form class="container" onsubmit="updateUnit(event)" id="needs-validation-modal" novalidate>
+    <div class="row">
+        <h1 id="modal_id" hidden></h1>
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="modal_unit_name">Unit Name</label>
+                <input type="text" class="form-control" id="modal_unit_name" name="unit_name" placeholder="Unit Name" pattern="[a-zA-Z]" onkeyup="checkIfValid(this.id)" required>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="modal_unit_type">Unit Type</label>
+                <select class="custom-select" name="unit_type" id="modal_unit_type" onchange="checkIfSelectIsValid(this.id)" required>
+                    <option selected="selected" disabled="disabled">Select Unit Type</option>
+                    <option>bulk</option>
+                    <option>pcs</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label class="label" for="modal_description">Description</label>
+                <textarea class="form-control" type="text" id="modal_description" name="description"></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col"></div>
+        <div class="col"></div>
+        <div class="col text-right">
+            <button class="btn btn-primary" type="submit">Update</button>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,273 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="bgc-white bd bdrs-3 p-20 mB-20">
+            <h4 class="c-blue-500 mB-20 border-bottom border-primary mb-3">Stock In</h4>
+            <form id="stock_in_form" class="mb-3" onsubmit="submitStockIn(event)">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <select class="form-control" name="location" id="location" placeholder="Select Location" onchange="getQuantityByLocation($(this).val());$('#items').empty()" required>
+                            <option disabled selected>Select Location</option>
+                            <script>getLocations()</script>
+                        </select>
+                    </div>
+                </div>
+            </form>
+            <div class="row">
+                <div class="col-md-6">
+                    <h4 class="c-grey-900 mB-20 bdB mb-3">Select Item</h4>
+                    <table id="dataTable" class="row-border table table-striped hover" cellspacing="0" width="100%">
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4 class="c-grey-900 mB-20 bdB mb-3">Item In</h4>
+                    <table id="itemDatatable" class="table table-striped mb-5">
+                        <tbody id="items">
+                        </tbody>
+                    </table>
+                    <div class="bdB bdT" style="width:95%;position:absolute;bottom: 0px">
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <h6 class="c-grey-900"><span class="c-grey-500">Total    </span> Items: <span id="total_items">0</span></h6>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-right"><span class="text-right">Total:+<span id="total_in" class="text-info">0</span></span></h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <div class="row">
+                        <div class="col">
+                            <input id="grn" name="grn" form="stock_in_form" class="form-control" type="number" placeholder="GRN Number" required>
+                        </div>
+                        <div class="col">
+                            <input id="purchase_order" name="purchase_order" form="stock_in_form" class="form-control" type="number" placeholder="Purchase Order" required>
+                        </div>
+                        <div class="col">
+                            <div class="timepicker-input input-icon form-group">
+                                <div class="input-group">
+                                    <input type="text" class="form-control bdc-grey-200 start-date"
+                                           placeholder="Purchase Date" data-provide="datepicker" id="purchase_date" name="purchase_date">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <select id="submitted_by" name="submitted_by" class="form-control"required>
+                                <option disabled selected value="">Submitted By</option>
+                                <script>getEmployees("#submitted_by")</script>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <select id="received_by" name="received_by" class="form-control" required>
+                                <option disabled selected value="">Received By</option>
+                                <script>getEmployees("#received_by")</script>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <select id="authorised_by" name="authorised_by" class="form-control" required>
+                                <option disabled selected value="">Authorised By</option>
+                                <script>getEmployees("#authorised_by")</script>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <textarea id="remark" form="stock_in_form" class="form-control" placeholder="Remark"></textarea>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <button form="stock_in_form" class="btn btn-primary" type="submit" id="submit" disabled>Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var table = $('#dataTable').DataTable({
+        info: false,
+        rowId: "id",
+        columnDefs: [
+            {
+              targets: "_all",
+              class: "font-weight-bold"
+            },
+            {
+                "targets": 0,
+                visible: false,
+                searchable: false,
+                "data": "id"
+            },
+            {
+                targets: 1,
+                width: "80%",
+                data: "item"
+            },
+            {
+                targets: 2,
+                width: "20%",
+                data: "quantity"
+            }
+        ]
+    })
+
+    $('#dataTable').on('click', 'tr', function() {
+        var row = table.row(this);
+        if(!$('input[data='+table.row(this).data().id+"]").length == 0){
+            var init = Number($('input[data='+table.row(this).data().id+"]").val())
+            init = init + 1
+            $('input[data='+table.row(this).data().id+"]").val(init)
+
+            var rowData = table.row(this).data()
+            rowData.quantity = rowData.quantity.split("+")[0]+ "<span class='text-info'>+"+Number($('input[data='+table.row(this).data().id+"]").val()) +"</span>"
+            table.row(this).data(rowData)
+
+            var values = $("#items").find(".qty").map(function() { return Number($(this).val())}).get()
+            $("#total_in").html(values.reduce((a, b) => { return a + b}))
+
+            $("#submit").removeAttr("disabled")
+
+        }
+        else{
+            $("#items").append(` <tr class="row">
+                            <td class="text-left mt-2 col-4 border-0">
+                                ${$(this).children('td:first').html()}
+                            </td>
+                            <td class="text-right col-8">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <div class="row">
+                                                    <div class="col pr-0 mr-1">
+                                                        <label class="mt-2 pr-0 mr-1">Qty:</label>
+                                                    </div>
+                                                    <div class="col ml-0 pl-0">
+                                                        <input form="stock_in_form" data="${table.row(this).data().id}" min="1" onchange="updateInQuantity(this);updateQtyOnChange()" class="form-control qty ml-0" type="number" value="1" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="row">
+                                                    <div class="col pr-0 mr-1">
+                                                        <label class="mt-2 pr-0 mr-1">Price:</label>
+                                                    </div>
+                                                    <div class="col ml-0 pl-0">
+                                                        <input form="stock_in_form" data2="${table.row(this).data().id}" min="1" class="form-control price nospin text-right" type="number" value="1" required>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3 mt-2">
+                                        <button data="${table.row(this).data().id}" class="p-0 m-0 border-0 bg-transparent" onclick="removeRow(this)"><i class="text-danger fa fa-window-close"></i></button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>`)
+            $("#total_items").html($("#items tr").length)
+            var rowData = table.row(this).data()
+            rowData.quantity = rowData.quantity+"<span class='text-info'>+"+Number($('input[data='+table.row(this).data().id+"]").val()) +"</span>"
+            table.row(this).data(rowData)
+
+            var values = $("#items").find(".qty").map(function() { return Number($(this).val())}).get()
+            $("#total_in").html(values.reduce((a, b) => { return a + b}))
+
+            $("#submit").removeAttr("disabled")
+        }
+
+    })
+
+    function updateInQuantity(element){
+        var row = table.row("#"+$(element).attr("data")).data()
+        row.quantity = row.quantity.split("<")[0] + "<span class='text-info'>+" + $(element).val() + "</span>"
+        table.row("#"+$(element).attr("data")).data(row)
+    }
+
+    function updateQtyOnChange(){
+        var values = $("#items").find("input").map(function() {
+            return Number($(this).val())
+        }).get()
+        $("#total_in").html(values.reduce((a, b) => { return a + b}))
+    }
+
+    function getQuantityByLocation(location) {
+        $.post(baseUrl + "/app/stock_in.php", {location: location}, "json").done((data) => {
+            var jsonn = JSON.parse(data)
+
+            if (jsonn.success = "success") {
+                table.clear().draw()
+                table.rows.add(jsonn.data).draw(false)
+            }
+        })
+    }
+
+    function removeRow(element){
+        $(element).parents('tr').remove()
+        $("#total_items").html($("#items tr").length)
+
+        var rowData = table.row('#'+$(element).attr('data')).data()
+        rowData.quantity = rowData.quantity.split("+")[0]
+        table.row('#'+$(element).attr('data')).data(rowData)
+
+        if($("#items tr").length == 0){
+            $("#submit").attr("disabled","disabled")
+            $("#total_in").html("0")
+        }
+        else{
+            var values = $("#items").find(".qty").map(function() { return Number($(this).val())}).get()
+            $("#total_in").html(values.reduce((a, b) => { return a + b}))
+        }
+        // console.log($(element).closest('input').attr('data'))
+    }
+
+    function submitStockIn(event){
+        event.preventDefault()
+
+        var location_id = $("#location option:selected").attr('id')
+
+        var values = $("#items").find(".qty").map(function() {
+            return {
+                item_id: $(this).attr('data'),
+                location_id: location_id,
+                quantity: Number($(this).val()),
+                unit_price: $('input[data2='+ $(this).attr('data')+']').val(),
+                grn_no: $("#grn").val(),
+                purchase_order: $('#purchase_order').val(),
+                purchase_date: $('#purchase_date').val(),
+                submitted_by: $('#submitted_by option:selected').attr('id'),
+                received_by: $('#received_by option:selected').attr('id'),
+                authorised_by: $('#authorised_by option:selected').attr('id'),
+                remark: "'"+$("#remark").val()+"'",
+                created_by: "'"+$("#userProfileName").attr('uuid')+"'"
+            }
+        }).get()
+
+        var send = {
+            table: "transaction_in",
+            fields: ["item_id","location_id","quantity","unit_price","grn_no","purchase_order","purchase_date","submitted_by","received_by","authorised_by","remark","created_by"],
+            rows: values
+        }
+
+        $.post(baseUrl+"/app/stock_insert.php",send,"json").done((data)=>{
+            var jsonn = JSON.parse(data)
+
+            if(jsonn.success == "success"){
+                $('#ok').attr("data-type", "success").attr("data-message", "Successfully added stock.").attr("data-title", "Success! ").click()
+                $("#mainContent").load("views/stock_in.html")
+            }
+            else{
+                $('#ok').attr("data-type", "danger").attr("data-message", jsonn.message).attr("data-title", "Failure! ").click()
+            }
+        })
+
+
+    }
+</script>

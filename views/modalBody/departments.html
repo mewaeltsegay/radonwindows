@@ -1,0 +1,26 @@
+<form class="container" onsubmit="updateDepartment(event)" id="needs-validation-modal" novalidate>
+    <div class="row">
+        <h1 id="modal_id" hidden></h1>
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="modal_dept_name">Department Name</label>
+                <input type="text" class="form-control" id="modal_dept_name" name="dept_name" placeholder="Department Name" pattern="[a-zA-Z -]" onkeyup="checkIfValid(this.id)" required>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label class="label" for="modal_description">Description</label>
+                <textarea class="form-control" type="text" id="modal_description" name="description"></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col"></div>
+        <div class="col"></div>
+        <div class="col text-right">
+            <button class="btn btn-primary" type="submit">Update</button>
+        </div>
+    </div>
+</form>

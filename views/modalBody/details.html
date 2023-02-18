@@ -1,0 +1,110 @@
+<form class="container" id="needs-validation" onsubmit="updateItemDetails(event)" novalidate>
+    <div class="row">
+        <h1 id="qty" hidden></h1>
+        <h1 id="item_id" hidden></h1>
+        <div class="col-md-8">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label for="item">Item Name</label>
+                    <input type="text" class="form-control autocomplete" id="item" name="item"
+                           placeholder="Item Name" pattern="[A-Za-z0-9- .()]" onkeyup="checkIfValid(this.id)" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <div class="form-group"><label for="type">Item Type</label>
+                        <select id="type" name="type" class="form-control" onchange="checkIfSelectIsValid(this.id);showAssignedTo()" required>
+                            <option disabled selected>Select Type</option>
+                            <option>Inventory</option>
+                            <option>Fixed Asset</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="rowAssignedTo" hidden>
+                <div class="col-md-12 mb-3">
+                    <div class="form-group"><label for="assigned_to">Assigned To</label>
+                        <select id="assigned_to" name="assigned_to" class="form-control" onchange="checkIfAssignedToValid()" disabled required>
+                            <option disabled selected>Select Employee</option>
+                            <script>getEmployees("#assigned_to")</script>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" name="category" class="form-control" onchange="checkIfSelectIsValid(this.id)" required>
+                            <option disabled selected>Select Category</option>
+                            <script>getCategories()</script>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <div class="form-group"><label for="location">Location</label>
+                        <select id="location" name="location" class="form-control" onchange="checkIfSelectIsValid(this.id)" required>
+                            <option disabled selected>Select Location</option>
+                            <script>getLocations()</script>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="manufacturer">Manufacturer</label>
+                    <input type="text" class="form-control" id="manufacturer" name="manufacturer" onkeyup="checkIfValid(this.id)"
+                           placeholder="*Manufacturer's Name" pattern="[a-zA-Z]">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="model">Model</label>
+                    <input type="text" class="form-control" id="model" name="model" onkeyup="checkIfValid(this.id)"
+                           placeholder="*Model" pattern="[a-zA-Z0-9- /]">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="serial_no">Serial No.</label>
+                    <input type="text" class="form-control" id="serial_no" name="serial_no" onkeyup="checkIfValid(this.id);limitQuantityIfSerialIsSet()"
+                           placeholder="*Serial Number" pattern="[a-zA-Z0-9- ]">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="unit_price">Unit Price</label>
+                    <input type="text" class="form-control" id="unit_price" name="unit_price" onkeyup="checkIfValid(this.id)"
+                           placeholder="Unit Price" pattern="[0-9.]" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-group">
+                        <label for="unit_measure">Unit Measure</label>
+                        <select id="unit_measure" name="unit_measure" class="form-control" onchange="checkIfSelectIsValid(this.id)" required>
+                            <option disabled selected>Select Unit</option>
+                            <script> getUnits() </script>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="row">
+                <div class="col"  id="image">
+                    <div class="form-group">
+                        <label>Image</label>
+                        <div class="border rounded vert-align w-100" id="icon" style="height: 340px">
+                            <i class="fas fa-camera text-primary" style="font-size: 64pt;"></i>
+                        </div>
+                        <img class="img-center card-img-top text-center border rounded" id="pic" src="#" hidden/>
+                        <input class="is-valid" name="image" id="picture" type="text" hidden>
+                        <input class="is-valid" name="picture" id="browse" type="file" style="width: 240pt;overflow: hidden;text-overflow: clip;display: none" onchange="preview(this);imageUpload()">
+                        <div class="progress mT-10 align-baseline" id="progContainer" hidden>
+                            <div class="progress-bar bgc-light-blue-500" role="progressbar" id="progress"><span class="sr-only">40% Complete</span></div>
+                        </div>
+                        <button type="button" class="btn btn-primary align-baseline mb" style="width: 40px;height: 40px;position: absolute;right: 0;bottom: 0" onclick="document.getElementById('browse').click()"><i class="fas fa-plus ml--2 mr--2"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary" type="submit" >Update</button>
+</form>

@@ -1,0 +1,21 @@
+<div class="bgc-white bd bdrs-3 p-20 mB-20"><h4 class="c-grey-900 mB-20">New Category</h4>
+    <div class="card-body">
+        <form class="container" onsubmit="saveCategory(event)" id="needs-validation" novalidate>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="cat_name">Category Name</label>
+                        <input type="text" class="form-control" id="cat_name" name="cat_name" placeholder="Category Name" pattern="[a-zA-Z]" onkeyup="checkIfValid(this.id)" required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col"></div>
+                <div class="col"></div>
+                <div class="col text-right">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

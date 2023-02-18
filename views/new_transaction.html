@@ -1,0 +1,194 @@
+<div class="masonry-item" id="newTransactionForm">
+    <div class="row p-0">
+        <div class="col-md-9">
+            <div class="bgc-white bd bdrs-3 p-20 mB-20"><h4 class="c-grey-900 mB-20">Transactions</h4>
+                <table id="transactionsTable" class="row-border table table-striped" cellspacing="0"
+                       width="100%">
+                    <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">item</th>
+                        <th scope="col">Details</th>
+                        <th scope="col">Qty</th>
+                        <th scope="col">Unit Measure</th>
+                        <th scope="col">Transaction Type</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Remark</th>
+                        <th scope="col">Damaged</th>
+                        <th scope="col"></th>
+                    </tr>
+                    </thead>
+                    <tbody id="tableBody ">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="bgc-white p-20 bd h-full "><h6 class="c-grey-900">New Transaction</h6>
+                <div class="T-300">
+                    <form class="container" id="needs-validation" onsubmit="saveTransaction(event)">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="transaction_type">Transaction Type</label>
+                                    <select class="custom-select" name="transaction_type" id="transaction_type" onchange="SIVShow(this.value);populateItemsList();checkIfSelectIsValid(this.id)" required>
+                                        <option selected="selected" disabled="disabled">Select Transaction Type</option>
+                                        <script> getTransactionTypes() </script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="loc-row" hidden>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="transaction_type">Move To</label>
+                                    <select class="custom-select" name="location" id="location" onchange="checkIfSelectIsValid(this.id)" required>
+                                        <option selected="selected" disabled="disabled">Select Location</option>
+                                        <script> getLocations()</script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="item">Item</label>
+                                    <select onchange="checkIfSelectIsValid(this.id);getIndvItem(this.value);quantityHandling(this.value)" class="custom-select" name="item" id="item" required>
+                                        <option selected="selected" disabled="disabled">Select an Item</option>
+
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="items">Specifications</label>
+                                    <select class="custom-select" name="items[]" id="items" onchange="checkIfSelectIsValid(this.id);limitQuantity()" required>
+                                        <option selected="selected" disabled="disabled">Select an Item</option>
+
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="quantity">Quantity</label>
+                                    <input class="form-control" type="number" id="quantity" name="quantity" placeholder="Quantity" title="Can not exceed in stock." onchange="controlQuantity()" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="quantity">In Stock</label>
+                                    <input class="form-control" type="text" name="in_stock" id="in_stock" placeholder="In Stock" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="remark">Remark</label>
+                                    <textarea class="form-control" id="remark" name="remark" placeholder="Remark"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="employee">Recipient</label>
+                                    <select class="custom-select" name="employee" id="employee" onchange="checkIfSelectIsValid(this.id)" required>
+                                        <option selected="selected" disabled="disabled">Select an Employee</option>
+                                        <script>getEmployees("#employee")</script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label class="label">SIV Number</label>
+                                    <input class="form-control" name="siv" type="text" id="siv" placeholder="*SIV" onkeyup="checkIfValid2(this.id)" pattern="[0-9]{1-10}" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label class="label">Requisition</label>
+                                    <input class="form-control" name="requisition" type="text" id="requisition" placeholder="*Requisition Number" onkeyup="checkIfValid2(this.id)" pattern="[0-9]{1-10}" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col"></div>
+                            <div class="col"></div>
+                            <div class="col  text-right">
+                                <button class="btn btn-primary" type="submit">Save</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var table = $("#transactionsTable").DataTable({
+        "autoWidth": false,
+        "order": [[ 1, "asc" ]], //or desc
+        "columnDefs": [{
+            "targets": 6,
+            "className": "text-center",
+            "width": "7%"
+        },
+            {
+                "targets": 3,
+                "className": "text-center",
+                "width": "3%"
+            },
+            {
+                "targets": 8,
+                "className": "text-center",
+                "width": "3%"
+            },
+            {
+                "targets": 5,
+                "width": "3%"
+            },
+            {
+                "targets": 9,
+                "className": "text-center",
+                "width": "10%"
+            }]
+    })
+    retrieveTransactions()
+
+    $('#transactionsTable tbody').on( 'click', 'button', function () {
+
+        var data = table.row( $(this).parents('tr') ).data();
+
+        if (this.classList.contains("return")) {
+            processReturn(this.id).then(table.row($(this).parents('tr')).remove().draw(false))
+        }
+        if (this.classList.contains("consume")) {
+            processConsumption(this.id).then(table.row($(this).parents('tr')).remove().draw(false))
+        }
+    } );
+    $('#transactionsTable tbody').on('click','input',function (){
+        if(this.classList.contains("damaged")){
+            const moment = require("moment")
+            var date = moment(new Date()).format("YYYY-MM-DD HH:mm:ss")
+            var details = {
+                id: $(this).attr("id"),
+                table: "`inventory transactions`",
+                fields: {
+                    returned: "D",
+                    return_date: date,
+                    received_by: document.querySelector("#userProfileName").getAttribute('uuid')
+                }
+            }
+            setDamagedTransaction(details,$(this).parents('tr'))
+        }
+    })
+</script>

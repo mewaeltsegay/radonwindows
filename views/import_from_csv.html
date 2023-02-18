@@ -1,0 +1,531 @@
+<div id="importLoader">
+    <div class="spinner"></div>
+</div>
+<div class="bgc-white bd bdrs-3 p-20 mB-20">
+    <div class="row">
+        <div class="col text-left">
+            <h4 class="c-grey-900 mB-20">Import</h4>
+        </div>
+        <div class="col text-right">
+            <button type="button" onclick="saveTemplate()" class="btn cur-p btn-primary">Download Template</button>
+        </div>
+    </div>
+    <div id="File_Content">
+       <div class="row mt-5">
+           <div class="col">
+               <h5 class="border-bottom border-secondary">About CSV File Import</h5>
+           </div>
+       </div>
+       <div class="row mt-3 mb-5">
+           <div class="col">
+               <ul>
+                   <li>Import an CSV file with item name, location, category, unit measure, quantity, price and name of employee they are assigned to.</li>
+                   <li>The first row from the CSV file will be marked as the name of each column.</li>
+                   <li>After adding in bulk, enter product quantity by using stock in.</li>
+                   <li>Having a hard time importing an CSV file? Download the template and fill it</li>
+               </ul>
+           </div>
+       </div>
+        <div class="pt-3 pb-3" style="border-radius: 10px;border-style: dashed;display: flex;align-items: center;justify-content: center" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <div class="flex-column align-items-center justify-content-center">
+                <i class="text-primary ml-5 fa fa-cloud-upload" style="font-size: 72pt"></i>
+                <p>Please select or drag a csv file here</p>
+            </div>
+        </div>
+        <button class="form-control mt-3 bg-secondary" onclick="document.querySelector('#browse').click()">
+            <input type="file" id="browse" accept=".csv" onchange="processFile(this.files)" hidden>
+            <p class="text-center text-light">Browse</p>
+        </button>
+    </div>
+</div>
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content bg-dark border-light">
+            <div class="modal-header"><h5 class="modal-title text-light" id="exampleModalLabel">
+                Importing Data</h5>
+                <button type="button" class="close text-light" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body bg-dark" style="display: flex;align-items: center;justify-content: center">
+                <div class="loading"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var table
+    $('#importLoader').hide()
+
+    function showLoading(state){
+        $('#exampleModal').modal(state)
+    }
+
+    function drop(ev) {
+        ev.preventDefault();
+        var data = ev.dataTransfer.files;
+        processFile(data)
+    }
+
+    function allowDrop(ev) {
+        ev.preventDefault();
+    }
+
+    async function importData() {
+        $('#importLoader').show()
+        var uniqid = require('uniqid')
+
+        var table = $('#fileDataTable').DataTable()
+        var data = table.rows().data().toArray()
+        var item_data = []
+
+        if(importFrom === 'inventory'){
+            for (const i in data) {
+                var tmp = {
+                    item: "'" + data[i].Item + "'",
+                    category: "'" + data[i].Category + "'",
+                    location: "'" + data[i].Location + "'",
+                    description: "'" + data[i].Description + "'",
+                    reorder_level: data[i]["Reorder Level"],
+                    target_stock_level: data[i]["Target Stock Level"],
+                    unit_price: "'" + data[i]["Unit Price"] + "'",
+                    unit_measure: "'" + data[i]["Unit Measure"] + "'",
+                    quantity: data[i]["Quantity"],
+                    expiry_date: data[i]["Expiry Date"] === '' ? '0000-00-00' : data[i]["Expiry Date"],
+                    created_by: "'" + $('#userProfileName').attr('uuid') + "'",
+                    unique_id: "'" + uniqid('NCEW').toUpperCase() + "'",
+                    type: "'Inventory'"
+                }
+                item_data.push(tmp)
+            }
+
+            var items = {
+                table: "tmp_inventory_items",
+                type: "inventory",
+                fields: ["item", "category","location", "description", "reorder_level", "target_Stock_level","unit_price", "unit_measure","quantity", "expiry_date", "created_by","unique_id","type"],
+                rows: item_data
+            }
+
+            $.post(baseUrl+"/app/stock_import.php",items,"json").done(data => {
+                var jsonn = JSON.parse(data)
+                if(jsonn.success === "success"){
+                    $('#importLoader').hide()
+                    cancel()
+                    $('#ok').attr("data-type", "success").attr("data-message", "Successfully imported data.").attr("data-title", "Success! ").click()
+                }
+                else{
+                    $('#importLoader').hide()
+                    cancel()
+                    $('#ok').attr("data-type", "danger").attr("data-message", "Please try again.").attr("data-title", "Failure! ").click()
+                }
+            })
+        }
+        else{
+            for (const i in data) {
+                var tmp = {
+                    item: "'" + data[i].Item + "'",
+                    category: "'" + data[i].Category + "'",
+                    location: "'" + data[i].Location + "'",
+                    description: "'" + data[i].Description + "'",
+                    reorder_level: data[i]["Reorder Level"],
+                    target_stock_level: data[i]["Target Stock Level"],
+                    unit_price: "'" + data[i]["Unit Price"] + "'",
+                    unit_measure: "'" + data[i]["Unit Measure"] + "'",
+                    quantity: data[i]["Quantity"],
+                    expiry_date: data[i]["Expiry Date"] === '' ? '0000-00-00' : data[i]["Expiry Date"],
+                    created_by: "'" + $('#userProfileName').attr('uuid') + "'",
+                    unique_id: "'" + uniqid('NCEW').toUpperCase() + "'",
+                    assigned_to: "'" + data[i]["Assigned To"] + "'",
+                    department: "'" + data[i]["Department"] + "'",
+                    type: "'Fixed Asset'"
+                }
+                item_data.push(tmp)
+            }
+
+            var items = {
+                table: "tmp_inventory_items",
+                type: "fixed_asset",
+                fields: ["item", "category","location", "description", "reorder_level", "target_Stock_level","unit_price", "unit_measure","quantity", "expiry_date", "created_by","unique_id","assigned_to","department","type"],
+                rows: item_data
+            }
+
+            $.post(baseUrl+"/app/stock_import.php",items,"json").done(data => {
+                var jsonn = JSON.parse(data)
+                if(jsonn.success === "success"){
+                    $('#importLoader').hide()
+                    cancel()
+                    $('#ok').attr("data-type", "success").attr("data-message", "Successfully imported data.").attr("data-title", "Success! ").click()
+                }
+                else{
+                    $('#importLoader').hide()
+                    cancel()
+                    $('#ok').attr("data-type", "danger").attr("data-message", jsonn.message).attr("data-title", "Failure! ").click()
+                }
+            })
+        }
+
+    }
+
+    async function getCategoryId(name) {
+        var send = {
+            table: "category",
+            fields: ["id"],
+            where: `category_name = '${name}'`
+        }
+
+
+        var res = await $.post(baseUrl + "/app/stock_read.php", send, "json").done()
+
+        if(JSON.parse(res).length !== 0)
+            return JSON.parse(res).data[0].id
+        else{
+            var send2 = {
+                table: "category",
+                fields: ["category_name","created_by"],
+                rows: [{
+                    category_name: "'" + name + "'",
+                    created_by: "'" + $('#userProfileName').attr('uuid') + "'"
+                }]
+            }
+            var res2 = await $.post(baseUrl + "/app/stock_import.php", send2, "json").done(data => {
+                var jsonn = JSON.parse(data)
+
+                if(jsonn.success == "success"){
+                    getCategoryId(name)
+                }
+            })
+        }
+    }
+
+    async function getUnitId(name){
+        var send = {
+            table: "unit",
+            fields: ["id"],
+            where: `unit_name = '${name}'`
+        }
+
+
+        var res = await $.post(baseUrl + "/app/stock_read.php", send, "json").done()
+
+        return JSON.parse(res).data[0].id
+    }
+
+    function processFile(fileList){
+        console.log(importFrom)
+        if(importFrom == 'inventory'){
+            new Promise((resolve,reject) => {
+                $('#File_Content').empty().append(`
+                <table id="fileDataTable" class="row-border table table-striped hover" cellspacing="0" width="100%">
+                        <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Location</th>
+                            <th>Reorder Level</th>
+                            <th>Target Stock Level</th>
+                            <th>Unit Price</th>
+                            <th>Unit Measure</th>
+                            <th>Qty</th>
+                            <th>Expiry Date</th>
+                            <th>Description</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tableBody ">
+                        </tbody>
+                </table>
+                <div class=" mt-3 mb-0 text-right">
+                    <button id="save" onclick="importData()" class="btn btn-primary">Save</button>
+                    <button id="cancel" onclick="cancel()" class="btn btn-secondary">Cancel</button>
+                </div>
+        `)
+                resolve('done')
+            }).then(value => {
+                if(value === 'done'){
+                    var ucwords = require('ucwords')
+                    var moment = require('moment')
+                    var csv = require("csvtojson");
+                    var table = $('#fileDataTable').DataTable({
+                        columnDefs: [
+                            {
+                                targets: 0,
+                                data: "Item",
+                                render: function (data){
+                                    return ucwords(data)
+                                }
+                            },
+                            {
+                                targets: 1,
+                                data: "Category",
+                                render: function (data){
+                                    return ucwords(data)
+                                },
+                                class: "text-center"
+                            },
+                            {
+                                targets: 2,
+                                data: "Location",
+                                render: function (data){
+                                    return data.toUpperCase()
+                                },
+                                class: "text-center"
+                            },
+                            {
+                                targets: 3,
+                                data: "Reorder Level",
+                                class: "text-right"
+                            },
+                            {
+                                targets: 4,
+                                data: "Target Stock Level",
+                                class: "text-right"
+                            },
+                            {
+                                targets: 5,
+                                data: "Unit Price",
+                                class: "text-right",
+                                render: function (data){
+                                    var formatter = new Intl.NumberFormat('en-US', {
+                                        style: 'currency',
+                                        currency: 'USD',
+                                    })
+                                    return formatter.format(data) + " NKF"
+                                }
+                            },
+                            {
+                                targets: 6,
+                                data: "Unit Measure",
+                                render: function (data){
+                                    return ucwords(data)
+                                },
+                                class: "text-right"
+                            },
+                            {
+                                targets: 7,
+                                data: "Quantity",
+                                class: "text-right"
+                            },
+                            {
+                                targets: 8,
+                                data: "Expiry Date",
+                                render: function (data){
+                                    if(data == '')
+                                        return data
+                                    else
+                                        return moment(data).format('DD/MM/YYYY')
+                                },
+                                class: "text-right"
+                            },
+                            {
+                                targets: 9,
+                                data: "Description"
+                            }
+                        ]
+                    })
+                    csv()
+                        .fromFile(fileList[0].path)
+                        .then(function(jsonArrayObj){ //when parse finished, result will be emitted here.
+                            console.log(jsonArrayObj)
+                            table.rows.add(jsonArrayObj).draw(false)
+                        })
+                }
+            })
+        }
+        else{
+            new Promise((resolve,reject) => {
+                $('#File_Content').empty().append(`
+                <table id="fileDataTable" class="row-border table table-striped hover" cellspacing="0" width="100%">
+                        <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Location</th>
+                            <th>Reorder Level</th>
+                            <th>Target Stock Level</th>
+                            <th>Unit Price</th>
+                            <th>Unit Measure</th>
+                            <th>Qty</th>
+                            <th>Expiry Date</th>
+                            <th>Description</th>
+                            <th>Assigned To</th>
+                            <th>Department</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tableBody ">
+                        </tbody>
+                </table>
+                <div class=" mt-3 mb-0 text-right">
+                    <button id="save" onclick="importData()" class="btn btn-primary">Save</button>
+                    <button id="cancel" onclick="cancel()" class="btn btn-secondary">Cancel</button>
+                </div>
+        `)
+                resolve('done')
+            }).then(value => {
+                if(value === 'done'){
+                    var ucwords = require('ucwords')
+                    var moment = require('moment')
+                    var csv = require("csvtojson");
+                    table = $('#fileDataTable').DataTable({
+                        columnDefs: [
+                            {
+                                targets: 0,
+                                data: "Item",
+                                render: function (data){
+                                    return ucwords(data)
+                                }
+                            },
+                            {
+                                targets: 1,
+                                data: "Category",
+                                render: function (data){
+                                    return ucwords(data)
+                                },
+                                class: "text-center"
+                            },
+                            {
+                                targets: 2,
+                                data: "Location",
+                                render: function (data){
+                                    return data.toUpperCase()
+                                },
+                                class: "text-center"
+                            },
+                            {
+                                targets: 3,
+                                data: "Reorder Level",
+                                class: "text-right"
+                            },
+                            {
+                                targets: 4,
+                                data: "Target Stock Level",
+                                class: "text-right"
+                            },
+                            {
+                                targets: 5,
+                                data: "Unit Price",
+                                class: "text-right",
+                                render: function (data){
+                                    var formatter = new Intl.NumberFormat('en-US', {
+                                        style: 'currency',
+                                        currency: 'USD',
+                                    })
+                                    return formatter.format(data) + " NKF"
+                                }
+                            },
+                            {
+                                targets: 6,
+                                data: "Unit Measure",
+                                render: function (data){
+                                    return ucwords(data)
+                                },
+                                class: "text-right"
+                            },
+                            {
+                                targets: 7,
+                                data: "Quantity",
+                                class: "text-right"
+                            },
+                            {
+                                targets: 8,
+                                data: "Expiry Date",
+                                render: function (data){
+                                    if(data == '')
+                                        return data
+                                    else
+                                        return moment(data).format('DD/MM/YYYY')
+                                },
+                                class: "text-right"
+                            },
+                            {
+                                targets: 9,
+                                data: "Description"
+                            },
+                            {
+                                targets: 10,
+                                data: "Assigned To"
+                            },
+                            {
+                                targets: 11,
+                                data: "Department"
+                            }
+                        ]
+                    })
+                    csv()
+                        .fromFile(fileList[0].path)
+                        .then(function(jsonArrayObj){ //when parse finished, result will be emitted here.
+                            console.log(jsonArrayObj)
+                            table.rows.add(jsonArrayObj).draw(false)
+                        })
+                }
+            })
+        }
+
+
+    }
+
+    function cancel(){
+        $('#File_Content').empty().append(`
+                <div class="row mt-5">
+               <div class="col">
+                   <h5 class="border-bottom border-secondary">About CSV File Import</h5>
+               </div>
+           </div>
+           <div class="row mt-3 mb-5">
+               <div class="col">
+                   <ul>
+                       <li>Import an CSV file with item name, location, category, unit measure, quantity, price and name of employee they are assigned to.</li>
+                       <li>The first row from the CSV file will be marked as the name of each column.</li>
+                       <li>After adding in bulk, enter product quantity by using stock in.</li>
+                       <li>Having a hard time importing an CSV file? Download the template and fill it</li>
+                   </ul>
+               </div>
+           </div>
+            <div class="pt-3 pb-3" style="border-radius: 10px;border-style: dashed;display: flex;align-items: center;justify-content: center" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="flex-column align-items-center justify-content-center">
+                    <i class="text-primary ml-5 fa fa-cloud-upload" style="font-size: 72pt"></i>
+                    <p>Please select or drag a csv file here</p>
+                </div>
+            </div>
+            <button class="form-control mt-3 bg-secondary" onclick="document.querySelector('#browse').click()">
+                <input type="file" id="browse" accept=".csv" onchange="processFile(this.files)" hidden>
+                <p class="text-center text-light">Browse</p>
+            </button>
+        </div>
+        `)
+    }
+
+    function saveTemplate(){
+        var fileBuffer
+        var fs = require('fs')
+        var path = require('path')
+        var {remote} = require('electron'),
+            dialog = remote.dialog,
+            WIN = remote.getCurrentWindow();
+        if(importFrom == 'inventory')
+            fileBuffer = fs.readFileSync(path.join(__dirname,'assets/static/templates/inventory_template.csv'));
+        else
+            fileBuffer = fs.readFileSync(path.join(__dirname,'assets/static/templates/asset_template.csv'));
+
+        let options = {
+            //Placeholder 1
+            title: "Save Template",
+
+            //Placeholder 2
+            defaultPath : importFrom == 'inventory' ? remote.app.getPath("desktop")+"\\inventory.csv" : remote.app.getPath("desktop")+"\\fixed_asset.csv",
+
+            //Placeholder 4
+            buttonLabel : "Save Template",
+
+            //Placeholder 3
+            filters :[
+                {name: 'Csv', extensions: ['csv']},
+                {name: 'All Files', extensions: ['*']}
+            ]
+        }
+
+        //Synchronous
+        let filename = dialog.showSaveDialog(WIN, options)
+        filename.then(function (saveTo){
+            fs.writeFileSync(saveTo.filePath,fileBuffer)
+        })
+
+    }
+</script>

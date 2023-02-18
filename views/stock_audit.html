@@ -1,0 +1,273 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="bgc-white bd bdrs-3 p-20 mB-20">
+            <h4 class="c-green-500 mB-20 border-bottom border-success mb-3">Stock Audit</h4>
+            <form id="stock_out_form" class="mb-3" onsubmit="submitStockAudit(event)">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <select class="form-control" name="location" id="location" placeholder="Select Location" onchange="getQuantityByLocation($(this).val());$('#items').empty()" required>
+                            <option disabled selected>Select Location</option>
+                            <script>getLocations()</script>
+                        </select>
+                    </div>
+                </div>
+            </form>
+            <div class="row">
+                <div class="col-md-6">
+                    <h4 class="c-grey-900 mB-20 bdB mb-3">Select Item</h4>
+                    <table id="dataTable" class="row-border table table-striped hover" cellspacing="0" width="100%">
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4 class="c-grey-900 mB-20 bdB mb-3">Audit Item</h4>
+                    <table id="itemDatatable" class="table table-striped mb-5">
+                        <tbody id="items">
+                        </tbody>
+                    </table>
+                    <div class="bdB bdT" style="width:95%;position:absolute;bottom: 0px">
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <h6 class="c-grey-900"><span class="c-grey-500">Total    </span> Items: <span id="total_items">0</span></h6>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-right"><span class="text-right">Total:<span id="total_out" class="c-gray-900">0</span></span></h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+
+                </div>
+                <div class="col">
+                    <textarea id="remark" form="stock_out_form" class="form-control" placeholder="Remark"></textarea>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <button form="stock_out_form" class="btn btn-primary" type="submit" id="submit" disabled>Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function updateInQuantity(){
+        var values = $("#items").find("input").map(function() {
+            return Number($(this).val())-$(this).attr("qty")
+        }).get()
+        $("#total_out").html(values.reduce((a, b) => { return a + b}))
+    }
+    var table = $('#dataTable').DataTable({
+        info: false,
+        rowId: "id",
+        columnDefs: [
+            {
+                targets: "_all",
+                class: "font-weight-bold"
+            },
+            {
+                "targets": 0,
+                visible: false,
+                searchable: false,
+                "data": "id"
+            },
+            {
+                targets: 1,
+                width: "80%",
+                data: "item"
+            },
+            {
+                targets: 2,
+                width: "20%",
+                data: "quantity"
+            }
+        ]
+    })
+
+    $('#dataTable').on('click', 'tr', function() {
+        var row = table.row(this);
+        var init_quantity = Number(table.row(this).data().quantity.split("<")[0])
+        if(!$('input[data='+table.row(this).data().id+"]").length == 0){
+            var init = Number($('input[data='+table.row(this).data().id+"]").val())
+            init = init + 1
+            $('input[data='+table.row(this).data().id+"]").val(init)
+
+            var values = $("#items").find("input").map(function() {
+                return Number($(this).val()) - $(this).attr('qty')
+            }).get()
+            $("#total_out").html(values.reduce((a, b) => { return a + b}))
+
+            $("#submit").removeAttr("disabled")
+
+        }
+        else{
+            $("#items").append(` <tr class="row">
+                            <td class="text-left mt-2 col-8 border-0">
+                                ${$(this).children('td:first').html()}
+                            </td>
+                            <td class="text-right col-4">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <div class="row">
+                                            <div class="col mt-2 font-weight-bold mr-1 pr-0"><span>${table.row(this).data().quantity} <i class="fas fa-arrow-right text-success"></i></span></div>
+                                            <div class="col ml-0 pl-0"><input form="stock_in_form" data="${table.row(this).data().id}" qty="${table.row(this).data().quantity}" min="1" onchange="updateInQuantity(this)" class="form-control" type="number" value="1"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3 mt-2">
+                                        <button data="${table.row(this).data().id}" class="p-0 m-0 border-0 bg-transparent" onclick="removeRow(this)"><i class="text-danger fa fa-window-close"></i></button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>`)
+            $("#total_items").html($("#items tr").length)
+
+            var values = $("#items").find("input").map(function() {
+                return Number($(this).val()) - $(this).attr('qty')
+            }).get()
+            $("#total_out").html(values.reduce((a, b) => { return a + b}))
+
+            $("#submit").removeAttr("disabled")
+        }
+
+    })
+
+    function updateQuantity(element){
+        $("#extra_"+$(element).attr("data")).html("-"+$(element).val())
+    }
+
+    function getQuantityByLocation(location) {
+        $.post(baseUrl + "/app/stock_in.php", {location: location}, "json").done((data) => {
+            var jsonn = JSON.parse(data)
+
+            if (jsonn.success = "success") {
+                table.clear().draw()
+                table.rows.add(jsonn.data).draw(false)
+            }
+        })
+    }
+
+    function removeRow(element){
+        $(element).parents('tr').remove()
+        $("#total_items").html($("#items tr").length)
+
+        var rowData = table.row('#'+$(element).attr('data')).data()
+        rowData.quantity = rowData.quantity.split("-")[0]
+        table.row('#'+$(element).attr('data')).data(rowData)
+
+        if($("#items tr").length == 0){
+            $("#submit").attr("disabled","disabled")
+            $("#total_out").html("0")
+        }
+        else{
+            var values = $("#items").find("input").map(function() { return Number($(this).val())}).get()
+            $("#total_out").html(values.reduce((a, b) => { return a + b}))
+        }
+        // console.log($(element).closest('input').attr('data'))
+    }
+
+    function submitStockAudit(event){
+        event.preventDefault()
+
+        var location_id = $("#location option:selected").attr('id')
+
+        var send_out,send_in
+
+        var values_out = $("#items").find("input").map(function() {
+            var qty = $(this).attr('qty')
+            var value = $(this).val()
+
+            if(value < qty){
+                return {
+                    item_id: $(this).attr('data'),
+                    location_id: location_id,
+                    quantity: Math.abs(value - qty),
+                    type: "'audit'",
+                    remark: "'" + $('#remark').val() + "'",
+                    created_by: "'"+$("#userProfileName").attr('uuid')+"'"
+                }
+            }
+        }).get()
+
+        var values_in = $("#items").find("input").map(function() {
+            var qty = $(this).attr('qty')
+            var value = $(this).val()
+
+            if(value > qty){
+                return {
+                    item_id: $(this).attr('data'),
+                    location_id: location_id,
+                    quantity: value - qty,
+                    remark: "'audit:" + $('#remark').val() + "'",
+                    created_by: "'"+$("#userProfileName").attr('uuid')+"'"
+                }
+            }
+        }).get()
+
+        send_out = {
+            table: "transaction_out",
+            fields: ["item_id","location_id","quantity","type","remark","created_by"],
+            rows: values_out
+        }
+
+        send_in = {
+            table: "transaction_in",
+            fields: ["item_id","location_id","quantity","remark","created_by"],
+            rows: values_in
+        }
+
+        if(send_in.rows.length > 0) {
+            if (send_out.rows.length > 0) {
+                $.post(baseUrl + "/app/stock_insert.php", send_in, "json").done((data) => {
+                    var jsonn = JSON.parse(data)
+
+                    if (jsonn.success == "success") {
+                        $.post(baseUrl + "/app/stock_insert.php", send_out, "json").done((data) => {
+                            var jsonn = JSON.parse(data)
+
+                            if (jsonn.success == "success") {
+                                $('#ok').attr("data-type", "success").attr("data-message", "Successfully audited items.").attr("data-title", "Success! ").click()
+                                $("#mainContent").load("views/stock_audit.html")
+                            } else {
+                                $('#ok').attr("data-type", "danger").attr("data-message", jsonn.message).attr("data-title", "Failure! ").click()
+                            }
+                        })
+
+                    } else {
+                        $('#ok').attr("data-type", "danger").attr("data-message", jsonn.message).attr("data-title", "Failure! ").click()
+                    }
+                })
+            } else {
+                $.post(baseUrl + "/app/stock_insert.php", send_in, "json").done((data) => {
+                    var jsonn = JSON.parse(data)
+
+                    if (jsonn.success == "success") {
+                        $('#ok').attr("data-type", "success").attr("data-message", "Successfully audited items.").attr("data-title", "Success! ").click()
+                        $("#mainContent").load("views/stock_audit.html")
+                    } else {
+                            $('#ok').attr("data-type", "danger").attr("data-message", jsonn.message).attr("data-title", "Failure! ").click()
+                    }
+                })
+            }
+
+        }
+        else {
+            if(send_out.rows.length > 0){
+                $.post(baseUrl + "/app/stock_insert.php", send_out, "json").done((data) => {
+                    var jsonn = JSON.parse(data)
+
+                    if (jsonn.success == "success") {
+                        $('#ok').attr("data-type", "success").attr("data-message", "Successfully audited items.").attr("data-title", "Success! ").click()
+                        $("#mainContent").load("views/stock_audit.html")
+                    } else {
+                        $('#ok').attr("data-type", "danger").attr("data-message", jsonn.message).attr("data-title", "Failure! ").click()
+                    }
+                })
+            }
+        }
+
+    }
+</script>

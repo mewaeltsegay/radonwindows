@@ -1,0 +1,294 @@
+<div id="itemsLoader">
+    <div class="spinner"></div>
+</div>
+<div class="row" id="viewable" hidden>
+    <div class="col-md-6">
+        <div class="bgc-white bd bdrs-3 p-20 mB-20">
+            <div class="row">
+                <div class="col text-left">
+                    <h4 class="c-grey-900 mB-20">Item List</h4>
+                </div>
+                <div class="col text-right">
+                    <div class="btn-group mB-20" id="itemsAdd">
+                        <button type="button" class="btn btn-primary" onclick="$('#mainContent').load('views/add_stock_item.html')"><i class="fa fa-plus-square"></i> Add</button>
+                        <button type="button" class="btn btn-primary  dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="sr-only">Toggle Dropdown</span></button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" onclick="$('#mainContent').load('views/import_from_csv.html');importFrom = 'inventory'">Import from CSV</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <table id="dataTable" class="row-border table table-striped hover" cellspacing="0" width="100%">
+                <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Image</th>
+                    <th>Item</th>
+                    <th>Qty</th>
+                </tr>
+                </thead>
+                <tbody id="tableBody ">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="email-content">
+            <div class="h-100 scrollable pos-r ps">
+                <div class="email-content-wrapper">
+                    <div class="peers ai-c jc-sb pX-40 pY-30">
+                        <div class="peers peer-greed">
+                            <div class="peer mR-20" id="item_image">
+                                <div class="img-center text-center border rounded" style="width: 200pt;height: 200pt;display: flex;justify-content: center;align-items: center" id='imageHolder' data='0'><i class="fas fa-camera pt-3 text-primary" style="font-size: 64pt"></i></div>
+                            </div>
+                            <div class="peer"><h5 class="c-grey-900 mB-5 mt-2" id="item_name">Item Name</h5>
+                                <span id="item_cost">Item Cost</span></div>
+                        </div>
+                        <div class="peer">
+                            <button class="btn btn-primary mt-2" onclick='$("#mainContent").load("views/details.html")'><span class="font-weight-bold" id="item_total">Qty</span><i class="fa fa-chevron-right text-sm-right ml-3"></i></button>
+                        </div>
+                    </div>
+                    <div class="bdT bdB pX-20 pY-10">
+                        <table class="table mb-0">
+                            <tr class="row mt--1 mb-0">
+                                <h6 class="mb-0"><span id="item_locations">#</span> Location(s)</h6>
+                            </tr>
+                        </table>
+                    </div>
+                    <div>
+                        <table class="table" id="detailDataTable">
+                            <tbody class="table">
+                            </tbody>
+                        </table>
+                    </div>
+                <div class="ps__rail-x" style="left: 0px; bottom: 0px;"><div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div></div><div class="ps__rail-y" style="top: 0px; right: 0px;"><div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 0px;"></div></div></div>
+        </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(()=>{
+        if($.inArray('add_item',permissions) === -1) {
+            $('#itemsAdd').prop('hidden',true)
+        }
+    })
+    var jdata
+    var ucwords = require('ucwords')
+    var table = $("#dataTable").DataTable({
+        "columnDefs":[
+            {
+                targets: 4,
+                visible: false,
+                data: "category_name"
+            },
+            {
+                "targets": 3,
+                "width": "5%",
+                "class": "text-primary font-weight-bold",
+                "data": "total"
+            },
+            {
+                "targets": 2,
+                "data": "item",
+                render: function (data,type,row,meta){
+                    return `<div class='row font-weight-bold'>${ucwords(data)}</div><div class="row c-gray-500" style="font-size: 8pt">${ucwords(row.category_name)}</div>`
+                }
+            },
+            {
+                "targets": 0,
+                "visible": false,
+                searchable: false,
+                "data": "id"
+            },
+            {
+                targets: 1,
+                searchable: false,
+                width: "5%",
+                "data": "picture",
+                render: function (data){
+                    var image
+                    if(data === "") {
+                        image = "<div class=\"img-center text-center border rounded\" style=\"width: 40pt;height: 40pt\" id='imageHolder' data='0'> <i class=\"fas fa-camera pt-3 text-primary\" style=\"font-size: 16pt\"></i></div>"
+                    }
+                    else {
+                        image = "<img class='card-img ml-0 holder' src='"+ baseUrl + "/Items/images/thumbs/"+ data +".jpg' id='imageHolder' data="+ data +" style='width: 40pt;height: 40pt;display: block;margin-left: auto;margin-right: auto;border: 1px solid #ddd;border-radius: 4px;object-fit: cover;'>"
+                    }
+                    return image
+                }
+            }
+        ]
+    })
+
+
+    $.post(baseUrl+"/app/itemList.php",[],"json").done((data) =>{
+        var jsonn = JSON.parse(data)
+        jdata = jsonn.data
+        if(jsonn.success == "success") {
+            $('#itemsLoader').hide()
+            $('#viewable').removeAttr('hidden')
+            table.rows.add(jsonn.data).draw(false)
+            $("#dataTable").children("tbody").children("tr:first").click()
+        }
+        else{
+            $('#itemsLoader').hide()
+            $('#viewable').removeAttr('hidden')
+        }
+    })
+
+
+    var getItem = function (id){
+        return jdata.filter(data => data.id === id)
+    }
+
+    $('.dataTable').on('click', 'tr:not(:first)', function() {
+        var tmp = getItem(table.row(this).data().id)
+        selected_item = table.row(this).data().id
+
+        $("#item_name").html(ucwords(tmp[0].item))
+
+        var formatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        })
+        var qty = tmp[0].price_quantity == null ? [] : tmp[0].price_quantity.split(',')
+        var prices = tmp[0].price_unit_price == null ? 0 : tmp[0].price_unit_price.split(',')
+        var sum = 0
+        for (const i in qty) {
+            sum = sum + (qty[i]*prices[i])
+        }
+        var avg = Number(sum/qty.reduce((a, b) => Number(a) + Number(b), 0)).toFixed(2)
+
+        $("#item_cost").html(formatter.format(avg)+ " NKF")
+        $("#item_total").html(tmp[0].total)
+
+        if(tmp[0].picture == "") {
+            $("#item_image").empty()
+            $("#item_image").append(`<div class="img-center text-center border rounded" style=\"width: 200pt;height: 200pt;display: flex;justify-content: center;align-items: center\" id='imageHolder' data='0'><i class="fas fa-camera pt-3 text-primary" style="font-size: 64pt"></i></div>`)
+        }else {
+            $("#item_image").empty()
+            $("#item_image").append(`<img class='card-img ml-0 holder' src='${baseUrl}/Items/images/${tmp[0].picture}.jpg' id='imageHolder' data="${tmp[0].picture}" style='width: 200pt;height: 200pt;display: block;margin-left: auto;margin-right: auto;border: 1px solid #ddd;border-radius: 4px;object-fit: cover;'>`)
+        }
+
+        var locations = []
+        var out_going = []
+        var stock_locations
+
+        if(tmp[0].stock !== null){
+            stock_locations = tmp[0].stock.split(',')
+            for(let i=0;i<stock_locations.length;i++){
+                var temporary = {
+                    location: stock_locations[i].split(':')[0],
+                    quantity: stock_locations[i].split(':')[1]
+                }
+                locations.push(temporary)
+            }
+        }
+
+        if(tmp[0].IN !== null){
+            var in_locations = tmp[0].IN.split(',')
+            for(let i=0;i<in_locations.length;i++){
+                var temporary = {
+                    location: in_locations[i].split(':')[0],
+                    quantity: in_locations[i].split(':')[1]
+                }
+                locations.push(temporary)
+            }
+        }
+
+        if(tmp[0].OUT !== null){
+            var out_locations = tmp[0].OUT.split(',')
+            for(let i=0;i<out_locations.length;i++){
+                var temporary = {
+                    location: out_locations[i].split(':')[0],
+                    quantity: out_locations[i].split(':')[1]
+                }
+                out_going.push(temporary)
+            }
+        }
+
+        const {groupBy, sumBy, _} = require("lodash");
+
+        var unique = groupBy(locations, i => i.location)
+
+        const result = Object.keys(unique).map(key => {
+            const first = unique[key][0];
+            return {
+                ...first,
+                "quantity": sumBy(unique[key], i => Number(i.quantity)),
+            };
+        });
+
+        var unique_result = groupBy(result, i => i.location)
+
+        var unique_out_going = groupBy(out_going,i => i.location)
+
+        const out_result = Object.keys(unique_out_going).map(key => {
+            const first = unique_out_going[key][0];
+            return {
+                ...first,
+                "quantity": sumBy(unique_out_going[key], i => Number(i.quantity)),
+            };
+        });
+
+        var final_out = groupBy(out_result, i => i.location)
+
+        for (const key in unique_result) {
+            if(key in final_out){
+                unique_result[key][0].quantity = unique_result[key][0].quantity - final_out[key][0].quantity
+                if(unique_result[key][0].quantity === 0)
+                    delete unique_result[key]
+            }
+        }
+
+        $("#item_locations").html(_.flatMap(unique_result).length)
+
+        // console.log(_.flatMap(unique_result))
+        // console.log(final_out)
+
+        table2.clear().draw()
+
+        table2.rows.add(_.flatMap(unique_result)).draw(false)
+
+        // console.log(item_locations)
+    })
+
+</script>
+<script defer>
+    var ucwords2 = require('ucwords')
+    var table2 = $("#detailDataTable").DataTable({
+        "oLanguage": {
+            "sEmptyTable": "Nothing in Stock yet."
+        },
+        searching: false,
+        paging: false,
+        info: false,
+        "columnDefs":[
+            {
+                targets: "_all",
+                render: function(data){
+                    return ucwords2(data)
+                },
+                orderable: false
+            },
+            {
+                "targets": 0,
+                "class": "font-weight-bold",
+                "data": "location",
+                "render": function(data){
+                    return "<i class='fa fa-map-marker text-info'></i> " + data
+                }
+            },
+            {
+                "targets": 1,
+                "class": "text-right text-info font-weight-bold",
+                "data": "quantity"
+            }
+        ],
+        fnDrawCallback: function() {
+            $("#detailDataTable thead").remove();
+        }
+    })
+</script>
+
+

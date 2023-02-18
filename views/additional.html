@@ -1,0 +1,62 @@
+<div class="row">
+    <div class="col-9">
+        <div class="bgc-white bd bdrs-3 p-20 mB-20"><h4 class="c-grey-900 mB-20" id="additionalTitle"></h4>
+            <table id="additionalDataTable" class="row-border table table-striped" cellspacing="0" width="100%">
+                <thead>
+                <tr id="additionalHeaders">
+
+
+                </tr>
+                </thead>
+                <tbody id="tableBody ">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-3" id="additionalForm">
+
+    </div>
+</div>
+<div class="modal fade" id="additionalModal" tabindex="-1" role="dialog" aria-labelledby="additionalModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="additionalModalLabel">
+                Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="close"><span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+    populateAdditional()
+
+
+    $('#additionalDataTable tbody').on( 'click', 'button', function () {
+        if (this.classList.contains("delete")) {
+            const { dialog } = require('electron').remote
+            dialog.showMessageBox({
+                buttons: ["Yes","No"],
+                message: "Are you sure you want to delete this entry?"
+            }).then((response)=>{
+                if(response.response == 0){
+                    deleteRecord(this.getAttribute("data"),$(this).parents('tr'))
+                }
+            })
+        }
+        if(this.classList.contains("edit")){
+            document.querySelector("#additionalModalLabel").innerText = "Edit " + document.querySelector("#additionalTitle").innerText
+            var data = $(this).parents('tr').children().not(":last").map(function (){
+                return $(this).html()
+            })
+            data.push($(this).parents('tr').children(':last').children('.edit').attr('data'))
+            element = $(this).parents('tr')
+            console.log(data)
+            populateAdditionalModal(document.querySelector("#additionalTitle").innerText,data)
+        }
+    } );
+</script>

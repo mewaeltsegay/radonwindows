@@ -1,0 +1,29 @@
+<form class="container" onsubmit="updateRole(event)" id="needs-validation-modal" novalidate>
+    <div class="row">
+        <div class="col">
+            <h1 id="modal_id" hidden></h1>
+            <div class="form-group">
+                <label class="label">Role Name</label>
+                <input type="text" class="form-control" id="modal_role_name" name="role" placeholder="Role">
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label class="label" for="modalpermissions">Permissions</label>
+                <div id="modalpermissions">
+                    <script>getModalPrivilages()</script>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+
+    </div>
+    <div class="row">
+        <div class="col"></div>
+        <div class="col"></div>
+        <div class="col text-right"><button class="btn btn-primary" type="submit">Update</button></div>
+    </div>
+</form>

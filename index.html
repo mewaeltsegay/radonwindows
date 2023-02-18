@@ -1,0 +1,298 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+    <title>Radon - Inventory Management System</title>
+    <script>
+        const settings = require("electron-settings")
+        var permissions = settings.getSync('user.permissions.name')
+    </script>
+    <style>#loader {
+        transition: all .3s ease-in-out;
+        opacity: 1;
+        visibility: visible;
+        position: fixed;
+        height: 100vh;
+        width: 100%;
+        background: #fff;
+        z-index: 90000
+    }
+
+    #loader.fadeOut {
+        opacity: 0;
+        visibility: hidden
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        position: absolute;
+        top: calc(50% - 20px);
+        left: calc(50% - 20px);
+        background-color: #333;
+        border-radius: 100%;
+        -webkit-animation: sk-scaleout 1s infinite ease-in-out;
+        animation: sk-scaleout 1s infinite ease-in-out
+    }
+
+    @-webkit-keyframes sk-scaleout {
+        0% {
+            -webkit-transform: scale(0)
+        }
+        100% {
+            -webkit-transform: scale(1);
+            opacity: 0
+        }
+    }
+
+    @keyframes sk-scaleout {
+        0% {
+            -webkit-transform: scale(0);
+            transform: scale(0)
+        }
+        100% {
+            -webkit-transform: scale(1);
+            transform: scale(1);
+            opacity: 0
+        }
+    }</style>
+    <link href="assets/static/css/style.css" rel="stylesheet">
+    <link href="assets/static/css/print.css" media="print" rel="stylesheet">
+    <link href="assets/static/css/animate.css" rel="stylesheet">
+    <link href="assets/static/datatables/DataTables-1.10.24/css/jquery.dataTables.css" rel="stylesheet">
+    <link href="assets/static/css/notification.css" rel="stylesheet">
+    <link href="assets/static/js/plugin/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet" />
+<!--    <script src="assets/static/js/plugin/jquery/dist/jquery.min.js"></script>-->
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+    <script src="assets/static/js/plugin/jquery/dist/jquery.min.js"></script>
+    <script src="assets/static/js/sql-wasm.js"></script>
+    <script src="assets/static/datatables/DataTables-1.10.24/js/jquery.dataTables.js"></script>
+    <script src="assets/static/datatables/pdfmake-0.1.36/pdfmake.min.js"></script>
+    <script src="assets/static/datatables/pdfmake-0.1.36/vfs_fonts.js"></script>
+    <script src="assets/static/datatables/Buttons-1.7.0/js/dataTables.buttons.min.js"></script>
+    <script src="assets/static/datatables/Buttons-1.7.0/js/buttons.print.min.js"></script>
+    <script src="assets/static/datatables/Buttons-1.7.0/js/buttons.html5.js"></script>
+    <script src="assets/static/js/pdfmake.min.js"></script>
+    <script type="text/javascript" src="assets/static/js/jquery.validate.min.js"></script>
+    <script type="text/javascript" src="assets/static/js/renderer.js"></script>
+    <script src="assets/static/js/apexcharts/dist/apexcharts.js"></script>
+    <script>
+        window.Popper = {}
+    </script>
+    <script src="login/vendor/bootstrap/js/bootstrap.js"></script>
+</head>
+<body class="app" id="app">
+<div id="loader">
+    <div class="spinner"></div>
+</div>
+<script>window.addEventListener('load', function load() {
+    const loader = document.getElementById('loader');
+    setTimeout(function () {
+        loader.classList.add('fadeOut');
+    }, 300);
+});</script>
+<div>
+    <div class="sidebar">
+        <div class="sidebar-inner">
+            <div class="sidebar-logo">
+                <div class="peers ai-c fxw-nw">
+                    <div class="peer peer-greed"><a class="sidebar-link td-n" href="#">
+                        <div class="peers ai-c fxw-nw">
+                            <div class="peer">
+                                <div class="logo"><img class="mt-3 ml-3" src="assets/static/images/radon.svg" width="40" height="40" alt=""></div>
+                            </div>
+                            <div class="peer peer-greed"><h5 class="lh-1 mB-0 logo-text">Radon</h5></div>
+                        </div>
+                    </a></div>
+                    <div class="peer">
+                        <div class="mobile-toggle sidebar-toggle"><a href="" class="td-n"><i
+                                class="ti-arrow-circle-left"></i></a></div>
+                    </div>
+                </div>
+            </div>
+            <ul class="sidebar-menu scrollable pos-r">
+                <li class="nav-item" id="dash"><a class="sidebar-link" href="#"><span
+                        class="icon-holder"><i class="c-blue-500 ti-home"></i> </span><span
+                        class="title">Dashboard</span></a></li>
+                <li class="nav-item" id="inventory"><a class="sidebar-link" href="#"><span class="icon-holder"><i
+                        class="c-orange-500 fas fa-list-alt"></i> </span><span class="title">Inventory</span></a></li>
+                <li class="nav-item" id="fixed_asset"><a class="sidebar-link" href="#"><span class="icon-holder"><i
+                        class="c-pink-500 fas fa-building"></i> </span><span class="title">Fixed Asset</span></a></li>
+                <li class="nav-item" id="stockLoan"><a class="sidebar-link" href="#"><span class="icon-holder"><i
+                        class="c-cyan-500 ti-time"></i> </span><span class="title">Loans</span></a></li>
+                <li class="nav-item" id="stockIn"><a class="sidebar-link" href="#"><span class="icon-holder"><i
+                        class="c-blue-500 fas fa-download"></i> </span><span class="title">Stock In</span></a></li>
+                <li class="nav-item" id="stockOut"><a class="sidebar-link" href="#"><span class="icon-holder"><i
+                        class="c-red-500 fas fa-upload"></i> </span><span class="title">Stock Out</span></a></li>
+                <li class="nav-item" id="stockMove"><a class="sidebar-link" href="#"><span class="icon-holder"><i
+                        class="c-gray-500 fas fa-arrow-right"></i> </span><span class="title">Stock Move</span></a></li>
+                <li class="nav-item" id="stockAudit"><a class="sidebar-link" href="#"><span class="icon-holder"><i
+                        class="c-purple-500 fas fa-refresh"></i> </span><span class="title">Stock Audit</span></a></li>
+                <li class="nav-item" id="damaged"><a class="sidebar-link" href="#"><span class="icon-holder"><i
+                        class="c-red-500 fas fa-exclamation-triangle"></i> </span><span class="title">Damaged</span></a></li>
+                <li class="nav-item" id="employees"><a class="sidebar-link" href="#"><span class="icon-holder"><i
+                        class="c-yellow-500 fas fa-users"></i> </span><span class="title">Employees</span></a></li>
+                <li class="nav-item" id="reports"><a class="sidebar-link" href="#"><span class="icon-holder"><i
+                        class="c-green-500 fas fa-file-alt"></i> </span><span class="title">Reports</span></a></li>
+                <li class="nav-item dropdown"><a class="dropdown-toggle" href="javascript:void(0);"><span
+                        class="icon-holder"><i class="c-gray-500 fas fa-plus"></i> </span><span
+                        class="title">Additional</span> <span class="arrow"><i class="ti-angle-right"></i></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a class="sidebar-link" href="#" id="users">Users</a></li>
+                        <li><a class="sidebar-link" href="#" id="roles">Roles</a></li>
+                        <li><a class="sidebar-link" href="#" id="categories">Categories</a></li>
+                        <li><a class="sidebar-link" href="#" id="locations">Locations</a></li>
+                        <li><a class="sidebar-link" href="#" id="departments">Departments</a></li>
+                        <li><a class="sidebar-link" href="#" id="units">Units</a></li>
+                    </ul>
+                </li>
+                <!--                <li class="nav-item" id="report"><a class="sidebar-link" href="#"><span class="icon-holder"><i-->
+                <!--                        class="c-cyan-500 fas fa-paperclip"></i> </span><span class="title">Reports</span></a></li>-->
+                <!--                <li class="nav-item"><a class="sidebar-link" id="import" href="#"><span class="icon-holder"><i-->
+                <!--                        class="c-red-500 fas fa-file-import"></i> </span><span class="title">Import</span></a></li>-->
+                <!--                <li class="nav-item"><a class="sidebar-link" id="export" href="#"><span class="icon-holder"><i-->
+                <!--                        class="c-green-500 fas fa-file-export"></i> </span><span class="title">Export</span></a></li>-->
+                <li id="ok" data-align="center" data-message="" data-title="" data-type="" hidden>success</li>
+            </ul>
+        </div>
+    </div>
+    <div class="page-container">
+        <div class="header navbar">
+            <div class="header-container">
+                <ul class="nav-left">
+                    <li><a id="sidebar-toggle" class="sidebar-toggle" href="javascript:void(0);"><i class="ti-menu"></i></a>
+                    </li>
+                </ul>
+                <ul class="nav-right">
+                    <li class="notifications dropdown"><span class="counter bgc-red" id="counter"></span>
+                        <a href="" class="dropdown-toggle no-after" data-toggle="dropdown"><i class="ti-bell"></i></a>
+                        <ul class="dropdown-menu">
+                            <li class="pX-20 pY-15 bdB"><i class="ti-bell pR-10"></i> <span
+                                    class="fsz-sm fw-600 c-grey-900">Notifications</span></li>
+                            <li>
+                                <ul class="ovY-a pos-r scrollable lis-n p-0 m-0 fsz-sm" id="notification_content">
+
+                                </ul>
+                            </li>
+                            <li class="pX-20 pY-15 ta-c bdT"><span><a onclick="$('#mainContent').load('views/stock_notifications.html')" class="c-grey-600 cH-blue fsz-sm td-n">View All Notifications <i
+                                    class="ti-angle-right fsz-xs mL-10"></i></a></span></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown"><a href="" class="dropdown-toggle no-after peers fxw-nw ai-c lh-1"
+                                            data-toggle="dropdown">
+                        <div class="peer mR-10"><i class="w-2r h-2r text-center fas fa-user-astronaut avatar avatar-sm rounded-circle" style="font-size: 15pt;padding-top: 5px"></i></div>
+                        <div class="peer"><span class="fsz-sm c-grey-900" id="userProfileName"></span></div>
+                    </a>
+                        <ul class="dropdown-menu fsz-sm">
+                            <li onclick='$("#mainContent").load("views/profile.html")'><a href="" onclick="return false;" class="d-b td-n pY-5 bgcH-grey-100 c-grey-700" ><i class="ti-user mR-10"></i><span>Profile</span></a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a id="logout" class="d-b td-n pY-5 bgcH-grey-100 c-grey-700"><i class="ti-power-off mR-10"></i> <span>Logout</span></a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <!--                <ul class="center">-->
+                <!--                    <li style="height:inherit;align-items:center;justify-content: center;display: flex"><h5 style="font-family:productsans;font-size:20pt;margin: 0;position: absolute;top: 50%;left: 50%;-ms-transform: translate(-50%, -50%);transform: translate(-50%, -50%);">radon</h5></li>-->
+                <!--                </ul>-->
+            </div>
+        </div>
+        <main class="main-content bgc-grey-100 align-content-center">
+            <div id="mainContent" class="">
+
+            </div>
+            <div class="modal fade" id="details" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" style="display: none;" aria-hidden="true">
+                <div class="modal-dialog modal-xl" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="detailsModalLabel">Modal title</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="detailsLoader">
+                                <div class="spinner"></div>
+                            </div>
+                            <div id="viewable" hidden>
+                                <h6 class="text-right">No: <span id="no"></span></h6>
+                                <div style="display: flex; justify-content: center;">
+                                    <img class="text-center" src="assets/static/images/ncew_logo.png" style="height: 100px;width: 100px"/>
+                                </div>
+                                <h1 class="mb-0 text-center">National Confederation of Eritrean Workers</h1>
+                                <h2 class="mb-0 text-center" id="subtitle">Store Issue Voucher</h2>
+                                <div class="row">
+                                    <div class="col">
+                                        <h6 class="text-left" id="dept">Department: <span id="dept_id"></span></h6>
+                                    </div>
+                                    <div class="col">
+                                        <h6 class="text-right">Date: <span id="date"></span></h6>
+                                    </div>
+                                </div>
+                                <table id="detailsDataTable" class="table table-hover">
+                                    <thead>
+                                    <tr id="detailsTableColumns">
+
+                                    </tr>
+                                    </thead>
+                                    <tbody id="detailsTableBody">
+
+                                    </tbody>
+                                </table>
+                                <h5 class="text-right mr-5 text-success">Total: <span id="detailsTotalPrice"></span></h5>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                Close
+                            </button>
+                            <button type="button" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer id="footer" class="bdT ta-c p-30 lh-0 fsz-sm c-grey-600">
+        </footer>
+    </div>
+</div>
+<!--   Core   -->
+<script type="text/javascript" src="assets/static/js/vendor.js"></script>
+<script type="text/javascript" src="assets/static/js/bundle.js"></script>
+<script type="text/javascript" src="assets/static/js/minion.js"></script>
+<script type="text/javascript" src="assets/static/datatables/API/row().show().js"></script>
+<script type="text/javascript" src="assets/static/js/datatablesCellEdit.js"></script>
+<script>
+setCopyright()
+</script>
+<script>
+    $('#notification_content').empty()
+    $('#counter').attr('hidden',true)
+    $.post(baseUrl + "/app/notifications.php",[],"json").done(data=>{
+        var notifications = JSON.parse(data)
+
+        if(notifications.success === "success"){
+            if(notifications.data.length > 0){
+                $('#counter').removeAttr('hidden').html(notifications.data.length)
+                for (var i=0;i<=5;i++) {
+                    var image
+                    if(notifications.data[i].picture === "") {
+                        image = "<div class=\"img-center text-center border rounded\" style=\"width: 40pt;height: 40pt\" id='imageHolder' data='0'> <i class=\"fas fa-camera pt-3 text-primary\" style=\"font-size: 16pt\"></i></div>"
+                    }
+                    else {
+                        image = "<img class='w-3r bdrs-50p' src='"+ baseUrl + "/Items/images/thumbs/"+ notifications.data[i].picture +".jpg'>"
+                    }
+                    $('#notification_content').append(`<li><a onclick="$('#mainContent').load('views/stock_notifications.html')" class="peers fxw-nw td-n p-20 bdB c-grey-800 cH-blue bgcH-grey-100">
+                                        <div class="peer mR-15">${image}</div>
+                                        <div class="peer peer-greed"><span><span class="fw-500">${notifications.data[i].item}</span> <span class="c-grey-600">is running out</span></span>
+                                            <p class="m-0"><small class="fsz-xs">5 mins ago</small></p></div>
+                                    </a>
+                                    </li>`)
+                }
+            }
+        }
+        else{
+            $('#counter').attr('hidden','hidden')
+            $('#notification_content').append(`<li><div class="text-center mt-3 mb-3"><span><span class="fw-500">Nothing to see here.</span></span></div></li>`)
+        }
+    })
+</script>
+</body>
+</html>

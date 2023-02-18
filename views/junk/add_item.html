@@ -1,0 +1,236 @@
+<div class="masonry-item" id="addItemForm">
+    <div class="bgc-white p-20 bd"><h6 class="c-grey-900">Add Item</h6>
+        <div class="">
+            <form class="container" id="needs-validation" onsubmit="saveItem(event)" novalidate>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="item">Item Name</label>
+                                <input type="text" class="form-control autocomplete" id="item" name="item"
+                                       placeholder="Item Name" pattern="[A-Za-z0-9- .()]" onkeyup="checkIfValid(this.id)" onchange="getInStock()" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group"><label for="type">Item Type</label>
+                                    <select id="type" name="type" class="form-control" onchange="checkIfSelectIsValid(this.id);showAssignedTo()" required>
+                                        <option disabled selected>Select Type</option>
+                                        <option>Inventory</option>
+                                        <option>Fixed Asset</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="rowAssignedTo" hidden>
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group"><label for="assigned_to">Assigned To</label>
+                                    <select id="assigned_to" name="assigned_to" class="form-control" onchange="checkIfAssignedToValid()" disabled required>
+                                        <option disabled selected>Select Employee</option>
+                                        <script>getEmployees("#assigned_to")</script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group">
+                                    <label for="category">Category</label>
+                                    <select id="category" name="category" class="form-control" onchange="checkIfSelectIsValid(this.id)" required>
+                                        <option disabled selected>Select Category</option>
+                                        <script>getCategories()</script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group"><label for="location">Location</label>
+                                    <select id="location" name="location" class="form-control" onchange="checkIfSelectIsValid(this.id)" required>
+                                        <option disabled selected>Select Location</option>
+                                        <script>getLocations()</script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="manufacturer">Manufacturer</label>
+                                <input type="text" class="form-control" id="manufacturer" name="manufacturer" onkeyup="checkIfValid(this.id)"
+                                       placeholder="*Manufacturer's Name" pattern="[a-zA-Z]">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="model">Model</label>
+                                <input type="text" class="form-control" id="model" name="model" onkeyup="checkIfValid(this.id)"
+                                       placeholder="*Model" pattern="[a-zA-Z0-9- /]">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="serial_no">Serial No.</label>
+                                <input type="text" class="form-control" id="serial_no" name="serial_no" onkeyup="checkIfValid(this.id);limitQuantityIfSerialIsSet()"
+                                       placeholder="*Serial Number" pattern="[a-zA-Z0-9- ]">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="supplier">Supplier</label>
+                                <input type="text" class="form-control" id="supplier" name="supplier" onkeyup="checkIfValid(this.id)"
+                                       placeholder="*Supplier" pattern="[a-zA-Z]">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="reorder_level">Reorder Level</label>
+                                <input type="text" class="form-control" id="reorder_level" name="reorder_level" onkeyup="checkIfValid(this.id)"
+                                       placeholder="Reorder Level" pattern="[0-9]" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="target_stock_level">Target Stock Level</label>
+                                <input type="text" class="form-control" id="target_stock_level" name="target_stock_level" onkeyup="checkIfValid(this.id)"
+                                       placeholder="Target Stock Level" pattern="[0-9]" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="col">
+                                            <label class="label">*Discontinued</label>
+                                        </div>
+                                        <div class="col-md-10">
+                                            <div class="form-group">
+                                                <span class="clearfix"></span>
+                                                <label class="custom-toggle">
+                                                    <input class="is-valid" type="checkbox" id="discontinued" name="discontinued" onchange="console.log(document.querySelector('#discontinued').checked)">
+                                                    <span class="custom-toggle-slider rounded-circle"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="unit_price">Unit Price</label>
+                                <input type="text" class="form-control" id="unit_price" name="unit_price" onkeyup="checkIfValid(this.id)"
+                                       placeholder="Unit Price" pattern="[0-9.]" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="unit_measure">Unit Measure</label>
+                                    <select id="unit_measure" name="unit_measure" class="form-control" onchange="checkIfSelectIsValid(this.id)" required>
+                                        <option disabled selected>Select Unit</option>
+                                        <script> getUnits() </script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="quantity">Quantity</label>
+                                <input type="text" class="form-control" id="quantity" name="quantity" onkeyup="checkIfValid(this.id)"
+                                       placeholder="Quantity" pattern="[0-9.]" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="expiry_date">Expiry Date</label>
+                                <div class="timepicker-input input-icon form-group">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control bdc-grey-200 start-date"
+                                               placeholder="*Expiry Date" data-provide="datepicker" id="expiry_date" name="expiry_date" onchange="checkIfDataAndTimeValid(this.id)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3"><label for="description">Description</label>
+                                <textarea id="description" name="description" class="form-control"></textarea>
+                            </div>
+                        </div>
+                        <div class="row"><div class="col-md-12 mb-1"><label>GRN</label></div></div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="grn">GRN Number</label>
+                                <input type="text" class="form-control" id="grn" name="grn" onchange="makeGRNRequired()"
+                                       placeholder="*GRN Number" pattern="[0-9]" onkeyup="checkIfValid(this.id)">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="purchase_order">Purchase Order</label>
+                                <input type="text" class="form-control" id="purchase_order" name="purchase_order" onchange="makeGRNRequired()"
+                                       placeholder="*Purchase Order Number" pattern="[0-9]" onkeyup="checkIfValid(this.id)">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="purchase_date">Purchase Date</label>
+                                <div class="timepicker-input input-icon form-group">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control bdc-grey-200 start-date"
+                                               placeholder="*Purchase Date" data-provide="datepicker" id="purchase_date" name="purchase_date" onchange="checkIfDataAndTimeValid(this.id);makeGRNRequired()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="submitted_by">Submitted By</label>
+                                    <select id="submitted_by" name="submitted_by" class="form-control" onchange="checkIfSelectIsValid(this.id);makeGRNRequired()">
+                                        <option disabled selected>*Select Employee</option>
+                                        <script>getEmployees("#submitted_by")</script>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="received_by">Received By</label>
+                                    <select id="received_by" name="received_by" class="form-control" onchange="checkIfSelectIsValid(this.id);makeGRNRequired()">
+                                        <option disabled selected>*Select Employee</option>
+                                        <script>getEmployees("#received_by")</script>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="authorised_by">Authorised_by</label>
+                                    <select id="authorised_by" name="authorised_by" class="form-control" onchange="checkIfSelectIsValid(this.id);makeGRNRequired()">
+                                        <option disabled selected>*Select Employee</option>
+                                        <script>getEmployees("#authorised_by")</script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col"  id="image">
+                                <div class="form-group">
+                                    <label>Image</label>
+                                    <div class="border rounded vert-align w-100" id="icon" style="height: 340px">
+                                        <i class="fas fa-camera text-primary" style="font-size: 64pt;"></i>
+                                    </div>
+                                    <img class="img-center card-img-top text-center border rounded" id="pic" src="#" hidden/>
+                                    <input class="is-valid" name="image" id="picture" type="text" hidden>
+                                    <input class="is-valid" name="picture" id="browse" type="file" style="width: 240pt;overflow: hidden;text-overflow: clip;display: none" onchange="preview(this);imageUpload()">
+                                    <div class="progress mT-10 align-baseline" id="progContainer" hidden>
+                                        <div class="progress-bar bgc-light-blue-500" role="progressbar" id="progress"><span class="sr-only">40% Complete</span></div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary align-baseline mb" style="width: 40px;height: 40px;position: absolute;right: 0;bottom: 0" onclick="document.getElementById('browse').click()"><i class="fas fa-plus ml--2 mr--2"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label>In Stock</label>
+                                    <input class="form-control text-right text-lg" type="text" id="stock" disabled placeholder="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" type="submit" >Save</button>
+            </form>
+        </div>
+    </div>
+</div>
+<input id="uuid" type="text" hidden disabled>
+<script>
+    waitForElement("#addItemForm",3000).then(function (){
+        /*initiate the autocomplete function on the "myInput" element, and pass along the countries array as possible autocomplete values:*/
+        autocomplete(document.getElementById("item"), getAllItems())
+    })
+</script>

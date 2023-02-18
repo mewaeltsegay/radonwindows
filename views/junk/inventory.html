@@ -1,0 +1,129 @@
+ <div class="bgc-white bd bdrs-3 p-20 mB-20"><h4 class="c-grey-900 mB-20">Inventory</h4>
+                <table id="dataTable" class="row-border table table-striped" cellspacing="0"
+                       width="100%">
+                    <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Location</th>
+                        <th>Category</th>
+                        <th>Unit Price</th>
+                        <th>Qty</th>
+                        <th>Unit Measure</th>
+                        <th></th>
+<!--                        <th rowspan="2">Total Price</th>-->
+<!--                        <th rowspan="2"></th>-->
+<!--                        <th rowspan="2"><span class="vert">Exp. Valve Temp.</span></th>-->
+                    </tr>
+                    </thead>
+                    <tbody id="tableBody ">
+                    </tbody>
+                </table>
+</div>
+ <div class="modal fade" id="itemModal" tabindex="-1" role="dialog" aria-labelledby="itemModalLabel" aria-hidden="true">
+     <div class="modal-dialog modal-xl" role="document">
+         <div class="modal-content">
+             <div class="modal-header"><h5 class="modal-title" id="itemModalLabel">
+                 Edit Item</h5>
+                 <button type="button" class="close" data-dismiss="modal"
+                         aria-label="Close"><span aria-hidden="true">&times;</span>
+                 </button>
+             </div>
+             <div class="modal-body" id="modalBody">
+
+             </div>
+         </div>
+     </div>
+ </div>
+ <script>
+     const mysql = require("mysql")
+     const ucwords = require("ucwords")
+
+     var connection = mysql.createPool({
+         connectionLimit: 100,
+         host: 'localhost',
+         user: 'root',
+         password: null,
+         database: 'inventory',
+         debug: false
+     })
+
+     var table = $("#dataTable").DataTable({
+         "autoWidth": false,
+         "order": [[ 0, "asc" ]], //or desc
+         "columnDefs": [{
+             "targets": 6,
+             "className": "text-center",
+             "width": "7%"
+         },{
+             "targets": 6,
+                 "width": "6%"
+             }]
+     })
+     var sql = "select inventory.item,location.location_name,category.category_name,inventory.unit_price,sum(inventory.quantity) as quantity,unit.unit_name, inventory.unique_id from inventory join location on location.id = inventory.location join category on inventory.category = category.id join unit on unit.id = inventory.unit_measure where not exists(select * from `inventory transactions` where details=inventory.unique_id and (returned = 'D' or returned = 'P' or returned = 'Q' or returned = '')) and inventory.type = 'inventory' group by item"
+
+     var formatter = new Intl.NumberFormat('en-US', {
+         style: 'currency',
+         currency: 'USD',
+
+         // These options are needed to round to whole numbers if that's what you want.
+         //minimumFractionDigits: 0, // (this suffices for whole numbers, but will print 2500.10 as $2,500.1)
+         //maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
+     })
+
+     connection.query(sql,function (error,results,fields){
+         if(error){
+             console.log(error)
+         }
+         else{
+             var i;
+             for (i in results){
+                 var row = []
+                 row.push("<button class='border-0 btn-outline- bg-transparent item'>"+ ucwords(results[i].item +"</button>"))
+                 row.push(ucwords(results[i].location_name))
+                 row.push(ucwords(results[i].category_name))
+                 row.push(formatter.format(results[i].unit_price) + " NKF")
+                 row.push(Number(results[i].quantity).toFixed(2).replace(/\.00/g, ''))
+                 row.push(ucwords(results[i].unit_name))
+                 row.push("<button type=\"button\" class=\"btn cur-p bg-transparent border-0 edit p-2 m-0\" id='"+results[i].unique_id+"' data-toggle='modal' data-target='#itemModal'><i class='fas fa-edit text-primary'></i></button><button type=\"button\" class=\"btn cur-p border-0 bg-transparent ml-1 mr-auto delete p-2 m-0\" id='"+results[i].unique_id+"'><i class='fas fa-trash-alt text-danger'></i></button>")
+                 table.row.add(row)
+             }
+             // table.rows.add(results)
+             table.draw(false)
+         }
+     })
+
+     $('#dataTable tbody').on( 'click', 'button', function () {
+
+         var data = table.row( $(this).parents('tr') ).data();
+
+         if (this.classList.contains("edit")) {
+             var data = $(this).parents('tr').children().not(":last").map(function () {
+                 return $(this).html()
+             })
+             element = $(this).parents('tr')
+             console.log(data)
+             populateItemModal(data)
+         }
+         if (this.classList.contains("delete")) {
+             if(confirm("Are you sure you want to delete this entry?")) {
+                 sql = 'delete from inventory where item="' + table.row($(this).parents('tr')).data()[0] + '"'
+                 connection.query(sql, function (error, results, fields) {
+                     if (error)
+                         console.error(error.message)
+                 })
+                 table.row($(this).parents('tr')).remove().draw(false)
+             }
+         }
+     } );
+
+     $('#dataTable tbody').on( 'click', 'button', function () {
+         if (this.classList.contains("item")) {
+             $("#mainContent").load("views/itemDetails.html")
+             detail = {
+                 item: $(this).parents('tr').children(':nth-child(1)').text(),
+                 location: $(this).parents('tr').children(':nth-child(2)').html(),
+                 type: "inventory"
+             }
+         }
+     } );
+ </script>

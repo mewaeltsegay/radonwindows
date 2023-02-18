@@ -1,0 +1,41 @@
+<div class="bgc-white bd bdrs-3 p-20 mB-20"><h4 class="c-grey-900 mB-20">New Unit</h4>
+    <div class="card-body">
+        <form class="container" onsubmit="saveUnit(event)" id="needs-validation" novalidate>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="unit_name">Unit Name</label>
+                        <input type="text" class="form-control" id="unit_name" name="unit_name" placeholder="Unit Name" pattern="[a-zA-Z]" onkeyup="checkIfValid(this.id)" required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="unit_type">Unit Type</label>
+                        <select class="custom-select" name="unit_type" id="unit_type" onchange="checkIfSelectIsValid(this.id)" required>
+                            <option selected="selected" disabled="disabled">Select Unit Type</option>
+                            <option>bulk</option>
+                            <option>pcs</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="label" for="description">Description</label>
+                        <textarea class="form-control" type="text" id="description" name="description"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col"></div>
+                <div class="col"></div>
+                <div class="col text-right">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

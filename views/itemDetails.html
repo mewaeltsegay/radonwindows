@@ -1,0 +1,226 @@
+<div class="masonry-item w-100 mb-3" id="stats" hidden>
+    <div class="row gap-20">
+        <div class="col-md-4">
+            <div class="layers bd bgc-white p-20">
+                <div class="layer w-100 mB-10"><h6 class="lh-1">Reorder Level</h6></div>
+                <div class="layer w-100">
+                    <div class="peers ai-sb fxw-nw">
+                        <div class="peer peer-greed"><span id="sparklinedash4"></span></div>
+                        <div class="peer"><span class="d-ib lh-0 va-m fw-600 bdrs-10em pX-15 pY-15 bgc-red-50 c-red-500" id="reorder">+10%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="layers bd bgc-white p-20">
+                <div class="layer w-100 mB-10"><h6 class="lh-1">Target Stock Level</h6></div>
+                <div class="layer w-100">
+                    <div class="peers ai-sb fxw-nw">
+                        <div class="peer peer-greed"><span id="sparklinedash"></span></div>
+                        <div class="peer"><span class="d-ib lh-0 va-m fw-600 bdrs-10em pX-15 pY-15 bgc-green-50 c-green-500" id="target">-7%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="layers bd bgc-white p-20">
+                <div class="layer w-100 mB-10"><h6 class="lh-1">Quantity</h6></div>
+                <div class="layer w-100">
+                    <div class="peers ai-sb fxw-nw">
+                        <div class="peer peer-greed"><span id="sparklinedash3"></span></div>
+                        <div class="peer"><span class="d-ib lh-0 va-m fw-600 bdrs-10em pX-15 pY-15 bgc-purple-50 c-purple-500" id="quantity">~12%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="bgc-white bd bdrs-3 p-20 mB-20"><h4 class="c-grey-900 mB-20" id="title">Item Details</h4>
+    <table id="detailsDataTable" class="row-border table table-striped" cellspacing="0" width="100%">
+        <thead>
+        <tr id="fields">
+            <th>Image</th>
+            <th>Item</th>
+            <th>Location</th>
+            <th>Category</th>
+            <th>Manufacturer</th>
+            <th>Model</th>
+            <th>Serial No.</th>
+            <th>Unit Price</th>
+            <th>Qty</th>
+            <th>Unit Measure</th>
+            <th>Damaged</th>
+            <th>Assigned To</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody ">
+        </tbody>
+    </table>
+</div>
+<div class="modal fade" id="itemModal" tabindex="-1" role="dialog" aria-labelledby="itemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="itemModalLabel">
+                Edit Item</h5>
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+
+            </div>
+        </div>
+    </div>
+</div>
+<script defer>
+    var ucwords = require('ucwords')
+    $("#title").append(' "'+detail.item+'"')
+    var item = detail.item
+    var loc = detail.location
+    var send
+    var columns
+
+    if(detail.type == "fixed asset") {
+        send = {
+            item: item,
+            location: loc,
+            assigned_to: detail.assigned_to,
+            type: detail.type
+        }
+
+        var table = $("#detailsDataTable").DataTable({
+            "autoWidth": false,
+            "order": [[ 1, "asc" ]], //or desc
+            "columnDefs": [{
+                "targets": 0,
+                data: "picture",
+                render: function (data){
+                    var image
+                    if(data === "") {
+                        image = "<div class=\"img-center text-center border rounded\" style=\"width: 100pt;height: 100pt;display: flex;justify-content: center;align-items: center\" id='imageHolder' data='0'> <i class=\"fas fa-camera pt-3 text-primary\" style='font-size: 32pt'></i></div>"
+                    }
+                    else {
+                        image = "<img class='card-img ml-0 holder' src='"+ baseUrl + "/Items/images/thumbs/"+ data +".jpg' id='imageHolder' data="+ data +" style='width: 100pt;height: 100pt;display: block;margin-left: auto;margin-right: auto;border: 1px solid #ddd;border-radius: 4px;object-fit: cover;'>"
+                    }
+                    return image
+                }
+            },{
+                "targets": 1,
+                data: "item",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 2,
+                data: "location_name",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 3,
+                data: "category_name",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 4,
+                data: "manufacturer",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 5,
+                data: "model",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 6,
+                data: "serial_no"
+            },{
+                "targets": 7,
+                data: "unit_price",
+                render: function (data){
+                    var formatter = new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                    })
+                    return formatter.format(Number(data)) + " NKF"
+                }
+            },{
+                "targets": 8,
+                class: 'text-center',
+                data: "quantity"
+            },{
+                "targets": 9,
+                data: "unit_name",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 10,
+                data: null,
+                class: "text-center",
+                render: function(data,type,row,meta){
+                    return '<input type="checkbox">'
+                }
+            },{
+                "targets": 11,
+                data: "assigned_to",
+                render: function (data){
+                    return ucwords(data)
+                }
+            }],
+        })
+    }
+    $.post(baseUrl + '/app/details.php',send,"json").done((data) => {
+        var ucwords = require("ucwords")
+        var response = JSON.parse(data)
+
+        if(response.success == "true"){
+            table.rows.add(response.data).draw(false)
+        }
+    })
+
+    $('#detailsDataTable tbody').on( 'click', 'button', function () {
+
+        var data = table.row( $(this).parents('tr') ).data();
+
+        if (this.classList.contains("edit")) {
+            var data = $(this).parents('tr').children().not(":last").map(function () {
+                return $(this).html()
+            })
+            data[0] = $(data[0]).attr('data')
+            data.push($(this).attr('data'))
+            element = $(this).parents('tr')
+            console.log(data)
+            populateDetailsModal(data)
+        }
+        if (this.classList.contains("delete")) {
+            if(confirm("Are you sure you want to delete this entry?")) {
+                deleteItem($(this).attr('id'),$(this).parents('tr'))
+            }
+        }
+    } );
+
+    $('#detailsDataTable tbody').on('click','input',function (){
+        if(this.classList.contains("damaged")){
+            var data =  $(this).parents('tr').children().not(":last").map(function () {
+                return $(this).html()
+            })
+            data[0] = $(this).attr("data")
+            data[10] = $(this).attr("id")
+            var details = {
+                id: data[0],
+                uuid: data[10],
+                qty: data[8],
+                created_by: document.querySelector("#userProfileName").getAttribute('uuid')
+
+            }
+            setDamaged(details,$(this).parents('tr'))
+        }
+    })
+</script>

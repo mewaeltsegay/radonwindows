@@ -1,0 +1,80 @@
+<form class="container" onsubmit="updateUser(event)" id="needs-validation-modal" novalidate>
+    <div class="row">
+        <h1 id="modal_id" hidden></h1>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="modal_first_name">First Name</label>
+                <input type="text" class="form-control" id="modal_first_name" name="first_name" placeholder="First Name" pattern="[a-zA-Z]" onkeyup="checkIfValid(this.id)" required>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="modal_last_name">Last Name</label>
+                <input type="text" class="form-control" id="modal_last_name" name="last_name" placeholder="Last Name" required pattern="[a-zA-Z]" onkeyup="checkIfValid(this.id)" required>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="modal_user_name">User Name</label>
+                <input type="text" class="form-control" id="modal_user_name" name="user_name" placeholder="Username" pattern="[a-zA-Z]" onkeyup="checkIfValid(this.id)" required>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label for="modal_dept">Department</label>
+                <select name="dept" id="modal_dept" class="custom-select" onchange="checkIfSelectIsValid(this.id)" required>
+                    <option selected="selected" disabled="disabled">Select a Department</option>
+                    <script> getModalDepartments()</script>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label for="modal_role">Roles</label>
+                <select name="role" id="modal_role" class="custom-select" onchange="checkIfSelectIsValid(this.id)" required>
+                    <option selected="selected" disabled="disabled">Select a Role</option>
+                    <script>getModalRoles()</script>
+                </select>
+            </div>
+        </div>
+    </div>
+        <div class="col"></div>
+        <div class="col"></div>
+        <div class="col text-right">
+            <button class="btn btn-primary" type="submit">Update</button>
+        </div>
+    </div>
+</form>
+<div class="divider"></div>
+<h5 class="title"> Reset Password</h5>
+<form class="container" onsubmit="updatePassword(event)" id="needs-validation-password" novalidate>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="modal_password">Password</label>
+                <input type="password" class="form-control" id="modal_password" name="password" placeholder="Password" min=8 onkeyup="checkIfPasswordValid(this.id)"required >
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="modal_password2">Confirm Password</label>
+                <input type="password" class="form-control" id="modal_password2" name="password2" placeholder="Confirm Password" onkeyup="checkIfModalPassword2Valid()" required>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col"></div>
+        <div class="col"></div>
+        <div class="col text-right">
+            <button class="btn btn-primary" type="submit">Reset</button>
+        </div>
+    </div>
+</form>

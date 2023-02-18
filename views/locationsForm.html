@@ -1,0 +1,29 @@
+<div class="bgc-white bd bdrs-3 p-20 mB-20"><h4 class="c-grey-900 mB-20">New Location</h4>
+    <div class="card-body">
+        <form class="container" onsubmit="saveLocation(event)" id="needs-validation" novalidate>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="loc_name">Location Name</label>
+                        <input type="text" class="form-control" id="loc_name" name="loc_name" placeholder="Location Name" pattern="[a-zA-Z -]" onkeyup="checkIfValid(this.id)" required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="label" for="description">Description</label>
+                        <textarea class="form-control" type="text" id="description" name="description"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col"></div>
+                <div class="col"></div>
+                <div class="col text-right">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

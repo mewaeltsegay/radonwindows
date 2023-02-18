@@ -1,0 +1,56 @@
+<div class="bgc-white bd bdrs-3 p-20 mB-20"><h4 class="c-grey-900 mB-20">Damaged Items</h4>
+    <table id="damagedDataTable" class="row-border table table-striped" cellspacing="0"
+           width="100%">
+        <thead>
+        <tr>
+            <th>Item</th>
+            <th>ID</th>
+            <th>Location</th>
+            <th>Category</th>
+            <th>Status</th>
+            <!--                        <th rowspan="2">Total Price</th>-->
+            <!--                        <th rowspan="2"></th>-->
+            <!--                        <th rowspan="2"><span class="vert">Exp. Valve Temp.</span></th>-->
+        </tr>
+        </thead>
+        <tbody id="tableBody ">
+        </tbody>
+    </table>
+</div>
+<script>
+    var ucwords = require("ucwords")
+
+    var table = $("#damagedDataTable").DataTable({
+        "order": [[ 0, "asc" ]],
+        columnDefs: [
+            {
+                targets: 0,
+                data: "item"
+            },
+            {
+                targets: 1,
+                data: "unique_id"
+            },
+            {
+                targets: 2,
+                data: "location_name"
+            },
+            {
+                targets: 3,
+                data: "category_name"
+            },
+            {
+                targets: 4,
+                data: "status"
+            }
+        ]
+    })
+
+    $.post(baseUrl + "/app/stockDamaged.php",[],"json").done(data=>{
+        var jsonn = JSON.parse(data)
+
+        if(jsonn.success == "success"){
+            table.rows.add(jsonn.data).draw(false)
+        }
+    })
+</script>

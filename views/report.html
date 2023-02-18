@@ -1,0 +1,685 @@
+<div class="bgc-white p-20 bd">
+    <div class="form-row">
+        <div class="col">
+            <h6 class="c-grey-900">Reports</h6>
+        </div>
+        <div class="col text-right">
+            <button type="button" onclick="generateReport()" form="report_form" class="btn btn-primary"><i class="fas fa-th-list"></i></button>
+            <button type="button" onclick="handlePrinting()" id="print" form="report_form" class="btn btn-outline-primary"><i class="fas fa-print"></i></button>
+            <button type="button" onclick="handleExcel()" id="csv" form="report_form" class="btn btn-outline-success"><i class="fas fa-file-excel"></i></button>
+        </div>
+    </div>
+    <div class="mT-30">
+        <form id="report_form">
+            <div class="form-row">
+                <div class="form-group col"><label class="fw-500">Start Date</label>
+                    <div class="timepicker-input input-icon form-group">
+                        <div class="input-group">
+                            <input type="text" id="start_date" class="form-control bdc-grey-200 start-date" placeholder="Pick a Date" data-provide="datepicker">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group col"><label class="fw-500">End Date</label>
+                    <div class="timepicker-input input-icon form-group">
+                        <div class="input-group">
+                            <input type="text" id="end_date" class="form-control bdc-grey-200 start-date" placeholder="Pick a Date" data-provide="datepicker">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group col"><label for="item">Item</label>
+                    <select id="item" name="item" class="form-control" required>
+                        <option id="items_all" selected>All</option>
+                        <script defer>getItems()</script>
+                    </select>
+                </div>
+                <div class="form-group col"><label for="category">Category</label>
+                    <select id="category" name="category" class="form-control" required>
+                        <option id="category_all" selected>All</option>
+                        <script defer>getCategories()</script>
+                    </select>
+                </div>
+                <div class="form-group col"><label for="location">Location</label>
+                    <select id="location" name="location" class="form-control" required>
+                        <option id="location_all" selected>All</option>
+                        <script defer>getLocations()</script>
+                    </select>
+                </div>
+            </div>
+        </form>
+        <table id="dataTable" class="row-border table table-striped" cellspacing="0" width="100%">
+            <thead>
+            <tr>
+                <th>Item</th>
+                <th>Unit Measure</th>
+                <th>Price</th>
+                <th>B.Balance</th>
+                <th>Purchase</th>
+                <th>Total</th>
+                <th>Consumption</th>
+                <th>Balance</th>
+                <th>SIV</th>
+                <th>GRN</th>
+            </tr>
+            </thead>
+            <tbody id="tableBody ">
+            </tbody>
+        </table>
+    </div>
+</div>
+<div style="z-index: 900">
+    <div class="spinner" id="reportLoader" hidden></div>
+    <div id="content"></div>
+</div>
+<script>
+    var ucwords = require('ucwords')
+    var moment = require('moment')
+
+    var jsonData
+
+    $('#start_date').val(moment(Date.now()).format("MM/DD/YYYY"))
+    $('#end_date').val(moment(Date.now()).format("MM/DD/YYYY"))
+    var formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    })
+    var table = $("#dataTable").DataTable({
+        "autoWidth": false,
+        "order": [[ 0, "asc" ]], //or desc
+        "columnDefs": [ {
+                "targets": 2,
+                data: null,
+                render: function (data,type,row,meta){
+                    var qty = row.price_quantity == null ? [] : row.price_quantity.split(',')
+                    var prices = row.price_unit_price == null ? 0 : row.price_unit_price.split(',')
+                    var sum = 0
+                    for (const i in qty) {
+                        sum = sum + (qty[i]*prices[i])
+                    }
+
+                    var total = qty.reduce((a, b) => Number(a) + Number(b), 0)
+
+                    if(total !== 0){
+                        var avg = Number(sum/qty.reduce((a, b) => Number(a) + Number(b), 0)).toFixed(2)
+                        return formatter.format(avg) + " NKF"
+                    }
+                    else{
+                        return formatter.format(0) + " NKF"
+                    }
+                }
+            },{
+                "targets": 0,
+                data: "item",
+                width: "10%",
+                class: "text-left",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 1,
+                data: "unit_name",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 3,
+                data: "beginning",
+                class: "text-center c-orange-500 font-weight-bold",
+                render: function (data,type,row,meta){
+                    var qty = row.price_quantity == null ? [] : row.price_quantity.split(',')
+                    var prices = row.price_unit_price == null ? 0 : row.price_unit_price.split(',')
+                    var sum = 0
+                    for (const i in qty) {
+                        sum = sum + (qty[i]*prices[i])
+                    }
+                    var avg = Number(sum/qty.reduce((a, b) => Number(a) + Number(b), 0)).toFixed(2)
+                    return data + " (" + formatter.format(avg *Number(data)) + ")"
+                }
+            },{
+                "targets": 4,
+                data: "IN",
+                class: "text-center c-blue-500 font-weight-bold",
+                render: function (data,type,row,meta){
+                    var qty = row.price_quantity == null ? [] : row.price_quantity.split(',')
+                    var prices = row.price_unit_price == null ? 0 : row.price_unit_price.split(',')
+                    var sum = 0
+                    for (const i in qty) {
+                        sum = sum + (qty[i]*prices[i])
+                    }
+                    var avg = Number(sum/qty.reduce((a, b) => Number(a) + Number(b), 0)).toFixed(2)
+                    return data + " (" + formatter.format(avg*Number(data)) + ")"
+                }
+            },{
+                "targets": 5,
+                data: null,
+                class: "text-center",
+                render: function(data,type,row,meta){
+                    var qty = row.price_quantity == null ? [] : row.price_quantity.split(',')
+                    var prices = row.price_unit_price == null ? 0 : row.price_unit_price.split(',')
+                    var sum = 0
+                    for (const i in qty) {
+                        sum = sum + (qty[i]*prices[i])
+                    }
+                    var avg = Number(sum/qty.reduce((a, b) => Number(a) + Number(b), 0)).toFixed(2)
+                    return Number(data.beginning) + Number(data.IN) + " (" + formatter.format((Number(data.beginning) + Number(data.IN)) * avg) + ")"
+                }
+            },{
+                "targets": 6,
+                data: "OUT",
+                class: "text-center c-red-500 font-weight-bold",
+                render: function (data,type,row,meta){
+                    var qty = row.price_quantity == null ? [] : row.price_quantity.split(',')
+                    var prices = row.price_unit_price == null ? 0 : row.price_unit_price.split(',')
+                    var sum = 0
+                    for (const i in qty) {
+                        sum = sum + (qty[i]*prices[i])
+                    }
+                    var avg = Number(sum/qty.reduce((a, b) => Number(a) + Number(b), 0)).toFixed(2)
+                    return data + " (" + formatter.format(avg*Number(data)) + ")"
+                }
+            },{
+                "targets": 7,
+                data: null,
+                class: "text-center c-green-500 font-weight-bold",
+                render: function(data,type,row,meta){
+                    var qty = row.price_quantity == null ? [] : row.price_quantity.split(',')
+                    var prices = row.price_unit_price == null ? 0 : row.price_unit_price.split(',')
+                    var sum = 0
+                    for (const i in qty) {
+                        sum = sum + (qty[i]*prices[i])
+                    }
+                    var avg = Number(sum/qty.reduce((a, b) => Number(a) + Number(b), 0)).toFixed(2)
+                    var res = (Number(data.beginning) + Number(data.IN)) - Number(data.OUT)
+                    return res + " ("+ formatter.format(res * avg) +")"
+                }
+            },{
+                "targets": 8,
+                data: "siv",
+                render: function (data){
+                    var tmp = data.split(',')
+                    var str = []
+
+                    for (const i in tmp) {
+                        var t = '<a href=\"#\" onclick=\"grnOrSivModal()\" class=\"text-danger\" data-toggle=\"modal\" data-target=\"#details\" data=\"siv\">' + tmp[i] + '</a>'
+                        str.push(t)
+                    }
+                    return str.join(',')
+                }
+            },{
+                "targets": 9,
+                data: "grn",
+                render: function (data){
+                    var tmp = data.split(',')
+                    var str = []
+
+                    for (const i in tmp) {
+                        var t = '<a href=\"#\" onclick=\"grnOrSivModal()\" class=\"text-primary\" data-toggle=\"modal\" data-target=\"#details\" data=\"grn\">' + tmp[i] + '</a>'
+                        str.push(t)
+                    }
+                    return str.join(',')
+                }
+            }
+        ]
+    })
+
+    function generateReport() {
+        table.clear().draw(false)
+        var send = {
+            start_date: moment($("#start_date").val()).format("YYYY-MM-DD"),
+            end_date: moment($("#end_date").val()).format("YYYY-MM-DD"),
+            item: $("#item option:selected").attr('id'),
+            category: $("#category option:selected").attr('id'),
+            location: $("#location option:selected").attr('id')
+        }
+        $.post(baseUrl + "/app/report.php", send, "json").done((data) => {
+            var jsonn = JSON.parse(data)
+
+            if (jsonn.success == 'success') {
+                // $('#faLoader').hide()
+                // $('#viewable').removeAttr('hidden')
+                table.rows.add(jsonn.data).draw(false)
+            }
+        })
+    }
+
+    function handlePrinting() {
+        jsonData = table.rows({order: 'applied',search: 'applied'}).data()
+        for (const i in jsonData) {
+            jsonData[i].total = Number(jsonData[i].beginning) + Number(jsonData[i].IN)
+            jsonData[i].balance = Number(jsonData[i].total) - Number(jsonData[i].OUT)
+            var qty = jsonData[i].price_quantity == null ? [] : jsonData[i].price_quantity.split(',')
+            var prices = jsonData[i].price_unit_price == null ? 0 : jsonData[i].price_unit_price.split(',')
+            var sum = 0
+            for (const i in qty) {
+                sum = sum + (qty[i]*prices[i])
+            }
+            var avg = Number(sum/qty.reduce((a, b) => Number(a) + Number(b), 0)).toFixed(2)
+            jsonData[i].unit_price = formatter.format(avg) + " NKF"
+        }
+        printJS({
+            printable: jsonData,
+            properties: [
+                { field: 'item', displayName: 'Item'},
+                { field: 'unit_name', displayName: 'Unit Name'},
+                { field: 'unit_price', displayName: 'Price'},
+                { field: 'beginning', displayName: 'B.Balance'},
+                { field: 'IN', displayName: 'Purchases'},
+                { field: 'total', displayName: 'Total'},
+                { field: 'OUT', displayName: 'Consumption'},
+                { field: 'balance', displayName: 'Balance'},
+                { field: 'grn', displayName: 'GRN'},
+                { field: 'siv', displayName: 'SIV'}
+            ],
+            header: `<div class="row"><div class="col"><h3 class="m-0">Inventory Movement</h3></div><div class="col" style="text-align: right"><h5>Date: ${$('#start_date').val() == $('#end_date').val() ? moment($('#start_date').val()).format("DD/MM/YYYY") : moment($('#start_date').val()).format("DD/MM/YYYY") +" - "+moment($('#end_date').val()).format("DD/MM/YYYY")}</h5></div></div>
+                     <div class="row"><h5 style="margin: 0">Item: <span>${$('#item option:selected').html()}</span></h5></div>
+                     <div class="row"><h5 style="margin: 0">Category: <span>${$('#category option:selected').html()}</span></h5></div>
+                     <div class="row"><h5 style="margin: 0">Location: <span>${$('#location option:selected').html()}</span></h5></div>
+                     <div class="row mb-3"><h5 style="margin-top: 0;margin-bottom: 10px">Pricing Level: Average</h5></div>`,
+            style: `@page { size: A4 landscape}
+                          .row {
+                          display: -ms-flexbox;
+                          display: flex;
+                          -ms-flex-wrap: wrap;
+                              flex-wrap: wrap;
+                          }
+                          .col {
+                              -ms-flex-preferred-size: 0;
+                                  flex-basis: 0;
+                              -ms-flex-positive: 1;
+                                  flex-grow: 1;
+                              max-width: 100%;
+                            }
+                          td {
+                            text-transform: capitalize
+                         }`,
+            type: 'json'
+        })
+    }
+
+    function handleExcel(){
+        const fs = require('fs');
+        const carbone = require('carbone');
+        var path = require('path')
+        var {remote} = require('electron'),
+            dialog = remote.dialog,
+            WIN = remote.getCurrentWindow();
+
+        jsonData = table.rows({order: 'applied',search: 'applied'}).data().toArray()
+        for (const i in jsonData) {
+            jsonData[i].total = Number(jsonData[i].beginning) + Number(jsonData[i].IN)
+            jsonData[i].balance = Number(jsonData[i].total) - Number(jsonData[i].OUT)
+        }
+        var data = {
+            date: $('#start_date').val() == $('#end_date').val() ? moment($('#start_date').val()).format("DD/MM/YYYY") : moment($('#start_date').val()).format("DD/MM/YYYY") +" - "+moment($('#end_date').val()).format("DD/MM/YYYY"),
+            item: $('#item option:selected').html(),
+            category: $('#category option:selected').html(),
+            location: $('#location option:selected').html(),
+            tableData: jsonData
+        }
+        var options = {
+                      "lang": "en-us",
+                      "currency": {
+                        "source": "USD",
+                        "target": "USD",
+                        "rates": {
+                          "EUR": 1,
+                          "USD": 2
+                        }
+                      }
+                    }
+        let option = {
+            //Placeholder 1
+            title: "Save Report",
+
+            //Placeholder 2
+            defaultPath : remote.app.getPath("desktop")+"\\Report.xlsx",
+
+            //Placeholder 4
+            buttonLabel : "Save Report",
+
+            //Placeholder 3
+            filters :[
+                {name: 'Excel', extensions: ['xlsx']},
+                {name: 'All Files', extensions: ['*']}
+            ]
+        }
+
+        //Synchronous
+        let filename = dialog.showSaveDialog(WIN, option)
+        filename.then(function (saveTo){
+            carbone.render(path.join(__dirname,"assets/static/templates/report_template.xlsx"), data, options, function(err, result){
+                if (err) {
+                    return console.log(err);
+                }
+                // write the result
+                fs.writeFileSync(saveTo.filePath, result);
+                $('#ok').attr("data-type", "success").attr("data-message", "Report has been saved.").attr("data-title", "Success! ").click()
+            });
+        })
+    }
+
+    function grnOrSivModal() {
+        var send
+        var detailsModal = document.getElementById('details')
+        $(document).on('shown.bs.modal', '#details', function (event) {
+            var table = $("#detailDataTable").DataTable()
+            // Button that triggered the modal
+            var button = event.relatedTarget
+            // Extract info from data-bs-* attributes
+            var type = button.getAttribute('data')
+            // If necessary, you could initiate an AJAX request here
+            // and then do the updating in a callback.
+            //
+            // Update the modal's content.
+            var modalTitle = detailsModal.querySelector('.modal-title')
+
+            type === "grn" ? $("#subtitle").html("Goods Received Note") : $("#subtitle").html("Store Issue Voucher")
+            modalTitle.textContent = type.toUpperCase()
+            $("#no").html(button.innerText)
+
+            var fields
+            var columns
+            if(type === "grn"){
+                fields = ["location.location_name","items.item","unit.unit_name","transaction_in.quantity","transaction_in.unit_price","transaction_in.remark","transaction_in.created_on"]
+                columns = ["Location","Item","Unit Measure","Qty","Unit Price","Total Price","Remark"]
+            }
+            else{
+                fields = ["items.item","unit.unit_name","transaction_out.quantity","stock.unit_price","transaction_out.created_on","departments.name"]
+                columns = ["Item","Unit Measure","Qty","Unit Price","Total Price"]
+            }
+
+            send = {
+                table: type == "grn" ? "transaction_in" : "transaction_out",
+                document: type+"_no="+button.innerText,
+                fields: fields
+            }
+
+            console.log(send)
+            $.post(baseUrl+"/app/stock_specific_history.php",send,"json").done((data)=>{
+                var jsonn = JSON.parse(data)
+
+                if(jsonn.success == "success"){
+                    $("#date").html(moment(jsonn.data[0].created_on).format("DD/MM/YYYY"))
+                    if(type == 'siv') {
+                        $("#dept_id").html(jsonn.data[0].name)
+                        $("#dept").prop('hidden', false)
+                    }
+                    else
+                        $("#dept").prop('hidden',true)
+                    $("#detailsTableColumns").empty()
+                    for (var column in columns) {
+                        $("#detailsTableColumns").append(`<th scope="col">${columns[column]}</th>`)
+                    }
+                    $("#detailsTableBody").empty()
+                    var formatter = new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                    })
+
+                    for(var i in jsonn.data){
+                        if(type == "siv"){
+                            $("#detailsTableBody").append(`<tr>
+                                        <th>${ucwords(jsonn.data[i].item)}</th>
+                                        <td>${ucwords(jsonn.data[i].unit_name)}</td>
+                                        <td>${jsonn.data[i].quantity}</td>
+                                        <td>${formatter.format(jsonn.data[i].unit_price) + " NKF"}</td>
+                                        <td>${formatter.format(Number(jsonn.data[i].quantity)*Number(jsonn.data[i].unit_price))+" NKF"}</td>
+                                    </tr>`)
+                        }
+                        else{
+                            $("#detailsTableBody").append(`<tr>
+                                        <th>${jsonn.data[i].location_name}</th>
+                                        <td>${ucwords(jsonn.data[i].item)}</td>
+                                        <td>${ucwords(jsonn.data[i].unit_name)}</td>
+                                        <td>${jsonn.data[i].quantity}</td>
+                                        <td>${formatter.format(jsonn.data[i].unit_price) + " NKF"}</td>
+                                        <td>${formatter.format(Number(jsonn.data[i].quantity)*Number(jsonn.data[i].unit_price))+" NKF"}</td>
+                                        <td>${jsonn.data[i].remark}</td>
+                                    </tr>`)
+                        }
+                    }
+                    $("#detailsTotalPrice").html(formatter.format(jsonn.data.reduce(function (sum, item) {
+                        return sum + (Number(item.unit_price)*Number(item.quantity));
+                    }, 0))+" NKF")
+                    $("#detailsLoader").hide()
+                    $("#viewable").removeAttr("hidden")
+                }
+            })
+            $(document).off("shown.bs.modal")
+        })
+    }
+
+</script>
+
+
+<!--<script>-->
+<!--    var moment = require("moment")-->
+<!--    var ucwords = require("ucwords")-->
+
+<!--    $("#start_date").val(moment(new Date()).format("MM/DD/YYYY"))-->
+<!--    $("#end_date").val(moment(new Date()).format("MM/DD/YYYY"))-->
+
+<!--    $("#reportLoader").hide()-->
+<!--    function generateReport() {-->
+<!--        $("#content").empty()-->
+<!--        $("#reportLoader").show()-->
+
+
+<!--        var send = {-->
+<!--            start_date: moment($("#start_date").val()).format("YYYY-MM-DD"),-->
+<!--            end_date: moment($("#end_date").val()).format("YYYY-MM-DD"),-->
+<!--            item: $("#item").val(),-->
+<!--            category: $("#category").val(),-->
+<!--            location: $("#location").val()-->
+<!--        }-->
+<!--        var reportsData-->
+
+<!--        $.post(baseUrl + "/app/report.php", send, "json").done(function (data) {-->
+<!--            var jsonn = JSON.parse(data)-->
+<!--            success = jsonn.success-->
+<!--        }).then((data) => {-->
+<!--            if (success == "true") {-->
+<!--                reportsData = JSON.parse(data).data-->
+<!--                for (var i in reportsData) {-->
+<!--                    var str = ''-->
+<!--                    for (var row in reportsData[i].table) {-->
+<!--                        var balance = (Number(reportsData[i].table[row].beginning) + Number(reportsData[i].table[row].in.item_in)) - reportsData[i].table[row].out.item_out-->
+<!--                        str = str + '<tr>' +-->
+<!--                            '<td class="font-weight-bold">' + moment(reportsData[i].table[row].date).format("DD/MM/YYYY") + '</td>' +-->
+<!--                            '<td class="font-weight-bold">' + ucwords(reportsData[i].unit_name) + '</td>' +-->
+<!--                            '<td class="font-weight-bold">' + formatter.format(Number(reportsData[i].price).toFixed(2)) + ' NKF</td>' +-->
+<!--                            '<td class="font-weight-bold"><span>' + reportsData[i].table[row].beginning + '</span><span> (' + formatter.format(reportsData[i].table[row].beginning) + ')</span></td>' +-->
+<!--                            '<td class="font-weight-bold">' + reportsData[i].table[row].in.item_in + ' (' + formatter.format(reportsData[i].table[row].in.item_in) + ')</td>' +-->
+<!--                            '<td class="font-weight-bold">' + reportsData[i].table[row].out.item_out + ' (' + formatter.format(reportsData[i].table[row].out.item_out) + ')</td>' +-->
+<!--                            '<td class="font-weight-bold">' + balance + ' (' + formatter.format(balance) + ')</td>' +-->
+<!--                            '</tr>'-->
+<!--                    }-->
+<!--                    $("#content").append('<div class="masonry-item mT-10 reportBody" id="reportContent">\n' +-->
+<!--                        '<div class="masonry-item">\n' +-->
+<!--                        '    <div class="bgc-white p-20 bd">\n' +-->
+<!--                        '        <div class="row gap-20">\n' +-->
+<!--                        '            <div class="col">\n' +-->
+<!--                        '                <div class="layers bd bgc-white p-20">\n' +-->
+<!--                        '                    <div class="layer w-100 mB-2"><h6 class="lh-1">Item</h6></div>\n' +-->
+<!--                        '                    <div class="layer w-100">\n' +-->
+<!--                        '                        <div class="peers ai-sb fxw-nw">\n' +-->
+<!--                        '                            <div class="peer mb-0"><span class="d-ib lh-0 va-m fw-600 bdrs-10em c-purple-500 item">' + reportsData[i].item + '</span>\n' +-->
+<!--                        '                            </div>\n' +-->
+<!--                        '                        </div>\n' +-->
+<!--                        '                    </div>\n' +-->
+<!--                        '                </div>\n' +-->
+<!--                        '            </div>\n' +-->
+<!--                        '            <div class="col">\n' +-->
+<!--                        '                <div class="layers bd bgc-white p-20">\n' +-->
+<!--                        '                    <div class="layer w-100 mB-2"><h6 class="lh-1">Category</h6></div>\n' +-->
+<!--                        '                    <div class="layer w-100">\n' +-->
+<!--                        '                        <div class="peers ai-sb fxw-nw">\n' +-->
+<!--                        '                            <div class="peer"><span class="d-ib lh-0 va-m fw-600 bdrs-10em c-purple-500 category">' + reportsData[i].category + '</span>\n' +-->
+<!--                        '                            </div>\n' +-->
+<!--                        '                        </div>\n' +-->
+<!--                        '                    </div>\n' +-->
+<!--                        '                </div>\n' +-->
+<!--                        '            </div>\n' +-->
+<!--                        '            <div class="col">\n' +-->
+<!--                        '                <div class="layers bd bgc-white p-20">\n' +-->
+<!--                        '                    <div class="layer w-100 mB-2"><h6 class="lh-1">Location</h6></div>\n' +-->
+<!--                        '                    <div class="layer w-100">\n' +-->
+<!--                        '                        <div class="peers ai-sb fxw-nw">\n' +-->
+<!--                        '                            <div class="peer"><span class="d-ib lh-0 va-m fw-600 bdrs-10em c-purple-500 location">' + reportsData[i].location + '</span>\n' +-->
+<!--                        '                            </div>\n' +-->
+<!--                        '                        </div>\n' +-->
+<!--                        '                    </div>\n' +-->
+<!--                        '                </div>\n' +-->
+<!--                        '            </div>\n' +-->
+<!--                        '            <div class="col">\n' +-->
+<!--                        '                <div class="layers bd bgc-white p-20">\n' +-->
+<!--                        '                    <div class="layer w-100 mB-2"><h6 class="lh-1">Description</h6></div>\n' +-->
+<!--                        '                    <div class="layer w-100">\n' +-->
+<!--                        '                        <div class="peers ai-sb fxw-nw">\n' +-->
+<!--                        '                            <div class="peer"><span class="d-ib lh-0 va-m fw-600 bdrs-10em c-purple-500 description">' + reportsData[i].description + '</span>\n' +-->
+<!--                        '                            </div>\n' +-->
+<!--                        '                        </div>\n' +-->
+<!--                        '                    </div>\n' +-->
+<!--                        '                </div>\n' +-->
+<!--                        '            </div>\n' +-->
+<!--                        '            <div class="col">\n' +-->
+<!--                        '                <div class="layers bd bgc-white p-20">\n' +-->
+<!--                        '                    <div class="layer w-100 mB-2"><h6 class="lh-1">Pricing Level</h6></div>\n' +-->
+<!--                        '                    <div class="layer w-100">\n' +-->
+<!--                        '                        <div class="peers ai-sb fxw-nw">\n' +-->
+<!--                        '                            <div class="peer"><span class="d-ib lh-0 va-m fw-600 bdrs-10em c-purple-500 average">Average</span>\n' +-->
+<!--                        '                            </div>\n' +-->
+<!--                        '                        </div>\n' +-->
+<!--                        '                    </div>\n' +-->
+<!--                        '                </div>\n' +-->
+<!--                        '            </div>\n' +-->
+<!--                        '        </div>\n' +-->
+<!--                        '        <div class="mT-10">\n' +-->
+<!--                        '            <table class="table table-striped">\n' +-->
+<!--                        '                <thead class="thead-light">\n' +-->
+<!--                        '                <tr>\n' +-->
+<!--                        '                    <th>Date</th>\n' +-->
+<!--                        '                    <th>Unit Measure</th>\n' +-->
+<!--                        '                    <th>Price</th>\n' +-->
+<!--                        '                    <th>B.Balance</th>\n' +-->
+<!--                        '                    <th>In</th>\n' +-->
+<!--                        '                    <th>Out</th>\n' +-->
+<!--                        '                    <th>Balance</th>\n' +-->
+<!--                        '                </tr>\n' +-->
+<!--                        '                </thead>\n' +-->
+<!--                        '                <tbody id="' + reportsData[i].id + '">\n' +-->
+<!--                        '                ' + str + '</tbody>\n' +-->
+<!--                        '            </table>\n' +-->
+<!--                        '        </div>\n' +-->
+<!--                        '    </div>\n' +-->
+<!--                        '</div>\n' +-->
+<!--                        '</div>\n')-->
+<!--                }-->
+<!--                $("#reportLoader").hide()-->
+<!--            }-->
+<!--            if(success == "empty"){-->
+<!--                $("#content").append("<div class='peers text-center vert-align font-weight-bold'>" +-->
+<!--                    "<div class='peer peer-greed'>'" +-->
+<!--                    "<div class='peer'> " +-->
+<!--                    "<i class='fas fa-box-open text-primary' style='font-size: 4em'></i>" +-->
+<!--                    "</div><div class='peer'>" +-->
+<!--                    "Empty result returned." +-->
+<!--                    "</div>" +-->
+<!--                    "</div>" +-->
+<!--                    "</div>")-->
+<!--                $("#reportLoader").hide()-->
+<!--            }-->
+<!--        })-->
+<!--    }-->
+
+<!--    function generateTabularReport(){-->
+<!--        const moment = require("moment")-->
+<!--        $("#content").empty()-->
+<!--        $("#reportLoader").show()-->
+
+<!--        var formatter = new Intl.NumberFormat('en-US', {-->
+<!--            style: 'currency',-->
+<!--            currency: 'USD',-->
+<!--        })-->
+
+<!--        var send = {-->
+<!--            start_date: moment($("#start_date").val()).format("YYYY-MM-DD"),-->
+<!--            end_date: moment($("#end_date").val()).format("YYYY-MM-DD"),-->
+<!--            item: $("#item").val(),-->
+<!--            category: $("#category").val(),-->
+<!--            location: $("#location").val()-->
+<!--        }-->
+<!--        var reportsData-->
+<!--        var date-->
+
+<!--        if(send.start_date === send.end_date){-->
+<!--            date = moment(send.start_date).format("MMM Do, YYYY")-->
+<!--        }-->
+<!--        else{-->
+<!--            date =  moment(send.start_date).format("MMM Do, YYYY") +" - "+  moment(send.end_date).format("MMM Do, YYYY")-->
+<!--        }-->
+<!--        $.post(baseUrl + "/app/reportTabular.php", send, "json").done(function (data) {-->
+<!--            var jsonn = JSON.parse(data)-->
+<!--            success = jsonn.success-->
+<!--        }).then((data) => {-->
+<!--            if(success === "true") {-->
+<!--                $("#content").append('<div class="bgc-white bd bdrs-3 p-20 mB-20 mT-10">' +-->
+<!--                    '                   <div class="row"><div class="col-10">' +-->
+<!--                    '                   <h4 class="c-grey-900 mB-20">Item Movement</h4>' +-->
+<!--                    '                   <h5>Location: ' + send.location + '</h5>\n' +-->
+<!--                    '</div>' +-->
+<!--                    '<div class="col-2"><h6>Date:' + date + '</h6></div></div>' +-->
+<!--                    '                <table id="reportDataTable" class="row-border table table-striped" cellspacing="0" width="100%">\n' +-->
+<!--                    '                    <thead>\n' +-->
+<!--                    '                    <tr>\n' +-->
+<!--                    '                        <th>Item</th>\n' +-->
+<!--                    '                        <th>Unit Measure</th>\n' +-->
+<!--                    '                        <th>Price</th>\n' +-->
+<!--                    '                        <th>B.Balance</th>\n' +-->
+<!--                    '                        <th>Purchase</th>\n' +-->
+<!--                    '                        <th>Total</th>\n' +-->
+<!--                    '                        <th>Consumption</th>\n' +-->
+<!--                    '                        <th>Balance</th>\n' +-->
+<!--                    '                        <th>SIV</th>\n' +-->
+<!--                    '                        <th>GRN</th>\n' +-->
+<!--                    '                    </tr>\n' +-->
+<!--                    '                    </thead>\n' +-->
+<!--                    '                    <tbody id="tableBody ">\n' +-->
+<!--                    '                    </tbody>\n' +-->
+<!--                    '                </table>\n' +-->
+<!--                    '</div>')-->
+<!--                var table = $("#reportDataTable").DataTable({-->
+<!--                    "order": [[ 0, "asc" ]],-->
+<!--                    "columnDefs": [{-->
+<!--                        "targets": 0,-->
+<!--                        "width": "10%"-->
+<!--                    },{-->
+<!--                        "targets": 8,-->
+<!--                        "width": "10%"-->
+<!--                    },{-->
+<!--                        "targets": 9,-->
+<!--                        "width": "10%"-->
+<!--                    }]-->
+<!--                })-->
+<!--                reportsData = JSON.parse(data).data-->
+<!--                for(var i in reportsData){-->
+<!--                    table.row.add([ucwords(reportsData[i].item),ucwords(reportsData[i].unit_measure),formatter.format(reportsData[i].price) + " NKF",reportsData[i].beginning,reportsData[i].purchased,(reportsData[i].beginning + reportsData[i].purchased),reportsData[i].consumption,(reportsData[i].beginning + reportsData[i].purchased)-reportsData[i].consumption,reportsData[i].siv,reportsData[i].grn])-->
+<!--                }-->
+<!--                table.draw(false)-->
+<!--                $("#reportLoader").hide()-->
+<!--            }-->
+<!--            if(success == "empty"){-->
+<!--                $("#content").append("<div class='peers text-center vert-align font-weight-bold'>" +-->
+<!--                    "<div class='peer peer-greed'>'" +-->
+<!--                    "<div class='peer'> " +-->
+<!--                    "<i class='fas fa-box-open text-primary' style='font-size: 4em'></i>" +-->
+<!--                    "</div><div class='peer'>" +-->
+<!--                    "Empty result returned." +-->
+<!--                    "</div>" +-->
+<!--                    "</div>" +-->
+<!--                    "</div>")-->
+<!--                $("#reportLoader").hide()-->
+<!--            }-->
+<!--        })-->
+<!--    }-->
+<!--</script>-->
+

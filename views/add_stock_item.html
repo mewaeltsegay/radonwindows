@@ -1,0 +1,296 @@
+<div class="masonry-item" id="addItemForm">
+    <div class="bgc-white p-20 bd"><h6 class="c-grey-900">Add Item</h6>
+        <div class="">
+            <form class="container" id="needs-validation" onsubmit="saveStockItem(event)" novalidate>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="item">Item Name</label>
+                                <input type="text" class="form-control autocomplete" id="item" name="item" placeholder="Item Name" onchange="getInStock()" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group">
+                                    <label for="type">Item Type</label>
+                                    <select id="type" name="type" class="form-control" onchange="showAssignedTo()" required>
+                                        <option disabled selected>Select Type</option>
+                                        <option>Inventory</option>
+                                        <option>Fixed Asset</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="rowAssignedTo" hidden>
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group"><label for="assigned_to">Assigned To</label>
+                                    <select id="assigned_to" name="assigned_to" class="form-control" disabled required>
+                                        <option disabled selected>Select Employee</option>
+                                        <script>getEmployees("#assigned_to")</script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group">
+                                    <label for="category">Category</label>
+                                    <select id="category" name="category" class="form-control" required>
+                                        <option disabled selected>Select Category</option>
+                                        <script>getCategories()</script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group"><label for="location">Location</label>
+                                    <select id="location" name="location" class="form-control" required>
+                                        <option disabled selected>Select Location</option>
+                                        <script>getLocations()</script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="manufacturer">Manufacturer</label>
+                                <input type="text" class="form-control" id="manufacturer" name="manufacturer"
+                                       placeholder="*Manufacturer's Name">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="model">Model</label>
+                                <input type="text" class="form-control" id="model" name="model"
+                                       placeholder="*Model">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="serial_no">Serial No.</label>
+                                <input type="text" class="form-control" id="serial_no" name="serial_no"
+                                       placeholder="*Serial Number">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="supplier">Supplier</label>
+                                <input type="text" class="form-control" id="supplier" name="supplier"
+                                       placeholder="*Supplier">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="reorder_level">Reorder Level</label>
+                                <input type="text" class="form-control" id="reorder_level" name="reorder_level"
+                                       placeholder="Reorder Level" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="target_stock_level">Target Stock Level</label>
+                                <input type="text" class="form-control" id="target_stock_level" name="target_stock_level"
+                                       placeholder="Target Stock Level" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="col">
+                                            <label class="label">*Discontinued</label>
+                                        </div>
+                                        <div class="col-md-10">
+                                            <div class="form-group">
+                                                <span class="clearfix"></span>
+                                                <label class="custom-toggle">
+                                                    <input class="is-valid" type="checkbox" id="discontinued" name="discontinued" onchange="console.log(document.querySelector('#discontinued').checked)">
+                                                    <span class="custom-toggle-slider rounded-circle"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="unit_price">Unit Price</label>
+                                <input type="number" min="1" class="form-control" id="unit_price" name="unit_price"
+                                       placeholder="Unit Price" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="unit_measure">Unit Measure</label>
+                                    <select id="unit_measure" name="unit_measure" class="form-control" required>
+                                        <option disabled selected>Select Unit</option>
+                                        <script> getUnits() </script>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="quantity">Initial Quantity</label>
+                                <input type="number" min="0" class="form-control" id="quantity" name="quantity"
+                                       placeholder="Initial Quantity" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="expiry_date">Expiry Date</label>
+                                <div class="timepicker-input input-icon form-group">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control bdc-grey-200 start-date"
+                                               placeholder="*Expiry Date" data-provide="datepicker" id="expiry_date" name="expiry_date">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3"><label for="description">Description</label>
+                                <textarea id="description" name="description" class="form-control"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col"  id="image">
+                                <div class="form-group">
+                                    <label>Image</label>
+                                    <div class="border rounded vert-align w-100" id="icon" style="height: 340px">
+                                        <i class="fas fa-camera text-primary" style="font-size: 64pt;"></i>
+                                    </div>
+                                    <img class="img-center card-img-top text-center border rounded" id="pic" src="#" hidden/>
+                                    <input class="is-valid" name="image" id="picture" type="text" hidden>
+                                    <input class="is-valid" name="picture" id="browse" type="file" style="width: 240pt;overflow: hidden;text-overflow: clip;display: none" onchange="preview(this);imageUpload()">
+                                    <div class="progress mT-10 align-baseline" id="progContainer" hidden>
+                                        <div class="progress-bar bgc-light-blue-500" role="progressbar" id="progress"><span class="sr-only">40% Complete</span></div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary align-baseline mb" style="width: 40px;height: 40px;position: absolute;right: 0;bottom: 0" onclick="document.getElementById('browse').click()"><i class="fas fa-plus ml--2 mr--2"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label>In Stock</label>
+                                    <input class="form-control text-right text-lg" type="text" id="stock" disabled placeholder="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" type="submit" >Save</button>
+            </form>
+        </div>
+    </div>
+</div>
+<input id="uuid" type="text" hidden disabled>
+<script>
+    waitForElement("#addItemForm",3000).then(function (){
+        /*initiate the autocomplete function on the "myInput" element, and pass along the countries array as possible autocomplete values:*/
+        autocomplete(document.getElementById("item"), getAllStockItems())
+    })
+
+    $.validator.addMethod(
+        "regex",
+        function(value, element, regexp)
+        {
+            if (regexp.constructor != RegExp)
+                regexp = new RegExp(regexp);
+            else if (regexp.global)
+                regexp.lastIndex = 0;
+            return this.optional(element) || regexp.test(value);
+        },
+        "You have used an invalid character."
+    )
+
+    $("#needs-validation").validate({
+        rules: {
+            item: {
+                required: true,
+                regex: /^[ A-Za-z0-9_@.()-]*$/,
+                normalizer: function(value) {
+                    return $.trim(value);
+                }
+            },
+            serial_no: {
+                regex: /^[ A-Za-z0-9_@.()-]*$/,
+            },
+            manufacturer: {
+                regex: /^[ A-Za-z0-9_@.()-]*$/,
+            },
+            model: {
+                regex: /^[ A-Za-z0-9_@.()-]*$/,
+            },
+            supplier: {
+                regex: /^[ A-Za-z0-9_@.()-]*$/,
+            },
+            reorder_level: {
+                required: true,
+                regex: /^[0-9]*$/,
+            },
+            target_stock_level: {
+                required: true,
+                regex: /^[0-9]*$/,
+            },
+            unit_price: {
+                required: true,
+                regex: /^[0-9.]*$/,
+            },
+            quantity: {
+                required: true,
+                regex: /^[0-9.]*$/,
+            }
+        }
+    })
+
+    function saveStockItem(event){
+        event.preventDefault()
+        if(!$("#needs-validation").valid()){
+            $('#ok').attr("data-type", "warning").attr("data-message", "Fill the form correctly and try again.").attr("data-title", "Error! ").click()
+        }
+        else{
+            var stock_values = {
+                location_id: $("#location option:selected").attr("id"),
+                unit_price:$("#unit_price").val(),
+                quantity: $("#quantity").val(),
+                type: "'"+$("#type").val()+"'",
+                assigned_to: $("#assigned_to option:selected").attr("id") === undefined ? 0 : $("#assigned_to option:selected").attr("id"),
+                created_by: "'"+$("#userProfileName").attr("uuid")+"'"
+
+            }
+            var item_values = {
+                item: "'"+$("#item").val()+"'",
+                category_id: $("#category option:selected").attr("id"),
+                description: "'"+$("#description").val()+"'",
+                supplier: "'"+$("#supplier").val()+"'",
+                manufacturer: "'"+$("#manufacturer").val()+"'",
+                model: "'"+$("#model").val()+"'",
+                serial_no: "'"+$("#serial_no").val()+"'",
+                target_stock_level: $("#target_stock_level").val(),
+                reorder_level: $("#reorder_level").val(),
+                unit_measure: $("#unit_measure option:selected").attr("id"),
+                expiry_date: "'"+$("#expiry_date").val()+"'",
+                picture: "'"+$("#picture").val()+"'",
+                created_by: "'"+$("#userProfileName").attr("uuid")+"'"
+            }
+            var stock_data = {
+                table: "stock",
+                fields: ["location_id","unit_price","quantity","type","assigned_to","created_by"],
+                values: stock_values
+            }
+            var item_data = {
+                table: "items",
+                fields: ["item","category_id","description","supplier","manufacturer","model","serial_no","target_stock_level","reorder_level","unit_measure","expiry_date","picture","created_by"],
+                values: item_values
+            }
+            var send = {
+                items: item_data,
+                stock: stock_data
+            }
+            $.post(baseUrl+"/app/stock_item_insert.php",send,"json").done((data)=>{
+                var jsonn = JSON.parse(data)
+
+                if(jsonn.success == "success"){
+                    $('#ok').attr("data-type", "success").attr("data-message", "Successfully added item.").attr("data-title", "Success! ").click()
+                    $('#mainContent').load("views/add_stock_item.html")
+                }
+            })
+
+        }
+    }
+
+
+</script>

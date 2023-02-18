@@ -1,0 +1,443 @@
+<div class="bgc-white bd bdrs-3 p-20 mB-20">
+    <div class="row">
+        <div class="col-md-9">
+            <div class="row">
+                <div class="col-10">
+                    <h4 class="c-grey-900 mB-20">Item Details</h4>
+                </div>
+                <div class="col-md-2 text-right p-0" id="itemDelete">
+                    <button class="btn btn-danger m-2" type="button" id="delete" onclick="deleteItem()"><i class="fa fa-trash"></i> Delete</button>
+                </div>
+            </div>
+
+            <table id="dataTable" class="row-border table table-striped" cellspacing="0" width="100%">
+                <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Item</th>
+                    <th>Description</th>
+                    <th>Manufacturer</th>
+                    <th>Model</th>
+                    <th>Supplier</th>
+                    <th>Unit Measure</th>
+                    <th>Reorder Level</th>
+                    <th>Target Stock Level</th>
+                </tr>
+                </thead>
+                <tbody id="tableBody ">
+                </tbody>
+            </table>
+            <h4 class="c-grey-900 mB-20 bdB pb-3">Current Stock by Location</h4>
+            <div id="locationDetails">
+
+            </div>
+        </div>
+        <div class="col-md-3 h-100">
+            <div class="bgc-white bd bdrs-8 p-20 mB-20 shadow-sm" style="border-radius: 10px">
+                <h4 class="c-grey-900 mB-20 text-center font-weight-bold">Current Quantity and History</h4>
+                <h1 class="c-blue-500 mB-20 text-center" id="total">25</h1>
+                <h5 class="c-grey-900 mB-20 text-center font-weight-normal"><i class="fa fa-map-marker text-info"></i> <span id="locationName">All Locations</span> <span id="location_number">(<span id="location">1</span>)</span></h5>
+                <div class="btn-toolbar w-100">
+                    <div class="btn-group mr-2 border w-100" role="group" aria-label="First group" id="transactions">
+                        <button id="in" type="button" class="btn border font-weight-bold" onclick="$('#mainContent').load('views/stock_in.html')">In</button>
+                        <button id="out" type="button" class="btn border font-weight-bold" onclick="$('#mainContent').load('views/stock_out.html')">Out</button>
+                        <button id="audit" type="button" class="btn border font-weight-bold" onclick="$('#mainContent').load('views/stock_audit.html')">Audit</button>
+                        <button id="move" type="button" class="btn border font-weight-bold" onclick="$('#mainContent').load('views/stock_move.html')">Move</button>
+                    </div>
+                </div>
+                <div class="bdT mt-3 w-100">
+                    <div id="history" class="w-100 text-" style="height: 420px;overflow-x: hidden;overflow-y: auto">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="imageModalLabel">
+                Select an Image</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col"  id="image">
+                        <div class="form-group">
+                            <label>Image</label>
+                            <div class="border rounded vert-align w-100" id="icon" style="height: 340px">
+                                <i class="fas fa-camera text-primary" style="font-size: 64pt;"></i>
+                            </div>
+                            <img class="img-center card-img-top text-center border rounded" id="pic" src="#" hidden/>
+                            <input class="is-valid" name="image" id="picture" type="text" hidden>
+                            <input class="is-valid" name="picture" id="browse" type="file" style="width: 240pt;overflow: hidden;text-overflow: clip;display: none" onchange="preview(this);imageUpload()">
+                            <div class="progress mT-10 align-baseline" id="progContainer" hidden>
+                                <div class="progress-bar bgc-light-blue-500" role="progressbar" id="progress"><span class="sr-only">40% Complete</span></div>
+                            </div>
+                            <button type="button" class="btn btn-primary align-baseline mb" style="width: 40px;height: 40px;position: absolute;right: 0;bottom: 0" onclick="document.getElementById('browse').click()"><i class="fas fa-plus ml--2 mr--2"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Close
+                </button>
+                <button type="button" class="btn btn-primary" id="updateImage">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script defer>
+    $(document).ready(()=>{
+        if($.inArray('delete_item',permissions) === -1) {
+            $('#itemDelete').prop('hidden',true)
+        }
+        if($.inArray('add_transaction',permissions) === -1) {
+            $('#in,#out,#move').prop('disabled',true)
+        }
+        if($.inArray('audit_items',permissions) === -1) {
+            $('#audit').prop('disabled',true)
+        }
+    })
+    var ucwords = require("ucwords")
+    var table = $("#dataTable").DataTable({
+        rowId: "id",
+        searching: false,
+        paging: false,
+        info: false,
+        "columnDefs":[
+            {
+                targets: "_all",
+                class: "text-center font-weight-bold",
+                orderable: false
+            },
+            {
+                targets: 1,
+                data: "item",
+                render: function (data){
+                    return ucwords(data)
+                }
+            }, {
+                targets: 0,
+                searchable: false,
+                "data": "picture",
+                render: function (data){
+                    var image
+                    if(data === "") {
+                        image = "<div class=\"img-center text-center border rounded\" style=\"width: 100pt;height: 100pt;display: flex;justify-content: center;align-items: center\" id='imageHolder' data='0'> <i class=\"fas fa-camera pt-3 text-primary\" style='font-size: 32pt'></i></div>"
+                    }
+                    else {
+                        image = "<img class='card-img ml-0 holder' src='"+ baseUrl + "/Items/images/thumbs/"+ data +".jpg' id='imageHolder' data="+ data +" style='width: 100pt;height: 100pt;display: block;margin-left: auto;margin-right: auto;border: 1px solid #ddd;border-radius: 4px;object-fit: cover;'>"
+                    }
+                    return image
+                }
+            },
+            {
+                targets: 2,
+                data: "description",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },
+            {
+                targets: 3,
+                data: "manufacturer",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },
+            {
+                targets: 4,
+                data: "model"
+            },
+            {
+                targets: 5,
+                data: "supplier",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },
+            {
+                targets: 6,
+                data: "unit_name",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },
+            {
+                targets: 8,
+                data: "target_stock_level"
+            },
+            {
+                targets: 7,
+                data: "reorder_level"
+            }
+
+        ]
+    })
+    var opts = getJSONUnits()
+
+    if($.inArray('edit_item',permissions) !== -1) {
+        table.MakeCellsEditable({
+            "columns": [1,2,3,4,5,6,7,8,9],
+            "inputCss":'form-control-sm',
+            "onUpdate": function (updatedCell,updatedRow,oldValue){
+                var fields = {}
+                if(table.columns(updatedCell.index().column).dataSrc()[0] != "unit_name"){
+                    fields[table.columns(updatedCell.index().column).dataSrc()[0]] = updatedCell.data()
+                }
+                else{
+                    fields["unit_measure"] = $(updatedCell.data()).attr('id')
+                }
+                var send = {
+                    id: updatedRow.id(),
+                    table: "items",
+                    fields: fields
+                }
+                $.post(baseUrl+"/app/stock_item_update.php",send,"json").done((data)=>{
+                    var jsonn = JSON.parse(data)
+
+                    if(jsonn.success != "true"){
+                        updatedCell.data(oldValue)
+                        $('#ok').attr("data-type", "danger").attr("data-message", "Something went wrong. Unable to update that field.").attr("data-title", "Error! ").click()
+                    }
+
+                })
+            },
+            "inputTypes": [
+                {
+                    "column":6,
+                    "type": "list",
+                    "options": opts,
+                }
+            ]
+        })
+    }
+
+    var jdata
+    var tmp
+    $.post(baseUrl+"/app/itemList.php",{id:selected_item},"json").done((data)=>{
+        var jsonn = JSON.parse(data)
+
+        if(jsonn.success == "success"){
+            jdata = jsonn.data
+            tmp = jdata
+            table.rows.add(jsonn.data).draw(false)
+
+            var locations = []
+            var out_going = []
+            var stock_locations
+
+            if(tmp[0].stock !== null){
+                stock_locations = tmp[0].stock.split(',')
+                for(let i=0;i<stock_locations.length;i++){
+                    var temporary = {
+                        location: stock_locations[i].split(':')[0],
+                        quantity: stock_locations[i].split(':')[1]
+                    }
+                    locations.push(temporary)
+                }
+            }
+
+            if(tmp[0].IN !== null){
+                var in_locations = tmp[0].IN.split(',')
+                for(let i=0;i<in_locations.length;i++){
+                    var temporary = {
+                        location: in_locations[i].split(':')[0],
+                        quantity: in_locations[i].split(':')[1]
+                    }
+                    locations.push(temporary)
+                }
+            }
+
+            if(tmp[0].OUT !== null){
+                var out_locations = tmp[0].OUT.split(',')
+                for(let i=0;i<out_locations.length;i++){
+                    var temporary = {
+                        location: out_locations[i].split(':')[0],
+                        quantity: out_locations[i].split(':')[1]
+                    }
+                    out_going.push(temporary)
+                }
+            }
+
+            const {groupBy, sumBy, _} = require("lodash");
+
+            var unique = groupBy(locations, i => i.location)
+
+            const result = Object.keys(unique).map(key => {
+                const first = unique[key][0];
+                return {
+                    ...first,
+                    "quantity": sumBy(unique[key], i => Number(i.quantity)),
+                };
+            });
+
+            var unique_result = groupBy(result, i => i.location)
+
+            var unique_out_going = groupBy(out_going,i => i.location)
+
+            const out_result = Object.keys(unique_out_going).map(key => {
+                const first = unique_out_going[key][0];
+                return {
+                    ...first,
+                    "quantity": sumBy(unique_out_going[key], i => Number(i.quantity)),
+                };
+            });
+
+            var final_out = groupBy(out_result, i => i.location)
+
+            for (const key in unique_result) {
+                if(key in final_out){
+                    unique_result[key][0].quantity = unique_result[key][0].quantity - final_out[key][0].quantity
+                    if(unique_result[key][0].quantity === 0)
+                        delete unique_result[key]
+                }
+            }
+
+            $("#total").html(jdata[0].total)
+
+            var loc = _.flatMap(unique_result)
+            console.log(loc)
+
+            var locations = loc.length
+            $("#location").html(locations)
+
+            for(let i=0;i<locations;i++){
+             var location_name = loc[i].location
+             var quantity = loc[i].quantity
+
+             $("#locationDetails").append(`<div class="row w-100 pl-3 m-5 pr-3" location="${location_name}" quantity="${quantity}" onclick="locationSpecific(this)">
+                    <div class="card w-100 pl-3 pr-3 shadow shadow-sm">
+                        <div class="row">
+                            <div class="col-md-10">
+                                <h6 class="text-left mt-2"><i class="fa fa-map-marker text-info"></i> ${ucwords(location_name)}</h6>
+                            </div>
+                            <div class="col-md-2">
+                                <h6 class="text-right mt-2">${quantity} <i class="fa fa-chevron-right" style="font-size: 9pt;vertical-align: center"></i></h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>`)
+            }
+        }
+    })
+
+    $.post(baseUrl+"/app/stock_history.php",{id:selected_item},"json").done((data)=>{
+        var jsonn = JSON.parse(data)
+        if(jsonn.success == "success"){
+            for (const row in jsonn.data) {
+                $("#history").append(`<div class="row mt-1 p-4 border">
+                            <div class="col-md-3 text-center" style="vertical-align: center">
+                                <h3><i class="${jsonn.data[row].icon}"></i></h3>
+                            </div>
+                            <div class="col-md-5">
+                                <h5 class="m-1">${jsonn.data[row].status}</h5>
+                                <h6 class="m-1">${jsonn.data[row].date}</h6>
+                                <h6 class="m-1">${jsonn.data[row].location_name}</h6>
+                            </div>
+                            <div class="col-md-4 text-right bg">
+                                <h5 class="${jsonn.data[row].color}">${jsonn.data[row].sign}${jsonn.data[row].quantity}</h5>
+<!--                                <h6><span>25 </span><i class="fa fa-arrow-right mb-4" style="font-size: 8pt;vertical-align: center"></i><span> 30</span></h6>-->
+                            </div>
+                        </div>`)
+            }
+            $("#history").append(`<div class="ps__rail-y" style="top: 0px; height: 699px; right: 0px;"><div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 331px;"></div></div>`)
+        }
+    })
+
+    function locationSpecific(element){
+        $("#locationDetails").children('.row').children('.card').removeClass('border border-primary')
+        $(element).children('.card').addClass('border border-primary')
+        $("#total").html($(element).attr("quantity"))
+        $("#locationName").html($(element).attr("location"))
+        $("#location_number").hide()
+
+        $("#history").empty()
+
+        $.post(baseUrl+"/app/stock_history.php",{id:selected_item,location:$(element).attr("location")},"json").done((data)=>{
+            var jsonn = JSON.parse(data)
+            if(jsonn.success == "success"){
+                for (const row in jsonn.data) {
+                    $("#history").append(`<div class="row mt-1 p-4 border">
+                            <div class="col-md-3 text-center" style="vertical-align: center">
+                                <h3><i class="${jsonn.data[row].icon}"></i></h3>
+                            </div>
+                            <div class="col-md-5">
+                                <h5 class="m-1">${jsonn.data[row].status}</h5>
+                                <h6 class="m-1">${jsonn.data[row].date}</h6>
+                                <h6 class="m-1">${jsonn.data[row].location_name}</h6>
+                            </div>
+                            <div class="col-md-4 text-right">
+                                <h5 class="${jsonn.data[row].color}">${jsonn.data[row].sign}${jsonn.data[row].quantity}</h5>
+<!--                                <h6><span>25 </span><i class="fa fa-arrow-right mb-4" style="font-size: 8pt;vertical-align: center"></i><span> 30</span></h6>-->
+                            </div>
+                        </div>`)
+                }
+            }
+        })
+    }
+
+    function deleteItem(){
+        const { dialog } = require('electron').remote
+        var send = {
+            id: table.row(0).id()
+        }
+      dialog.showMessageBox({
+            buttons: ["Yes","No"],
+            message: "Are you sure you want to delete this item?"
+        }).then((response)=>{
+            if(response.response == 0){
+                $.post(baseUrl+"/app/stock_item_delete.php",send,"json").done((data)=>{
+                            var jsonn = JSON.parse(data)
+
+                            if(jsonn.success == "success")
+                                $("#mainContent").load("views/items.html")
+                            else
+                                $('#ok').attr("data-type", "danger").attr("data-message", jsonn.message).attr("data-title", "Error! ").click()
+                })
+            }
+        })
+    }
+    $('#dataTable tbody').on( 'click', 'td:first-child', function () {
+        if($.inArray('edit_item',permissions) !== -1) {
+            $('#imageModal').modal().show()
+        }
+    } );
+
+    $('#updateImage').on('click',function (){
+        var send = {
+            id: selected_item,
+            table: "items",
+            fields: {picture: $('#picture').val()}
+        }
+        $.post(baseUrl + "/app/stock_item_update.php",send,"json").done(data => {
+            var response = JSON.parse(data)
+
+            if(response.success == "true"){
+                $('#imageModal').trigger('click')
+                table.cell({row:0,column:0}).data($('#picture').val())
+            }
+        })
+    })
+
+    $('[data-dismiss=modal]').on('click', function (e) {
+        var $t = $(this),
+            target = $t[0].href || $t.data("target") || $t.parents('.modal') || [];
+
+        $(target)
+            .find("input")
+            .val('')
+            .end()
+            .find("img")
+            .attr('src','')
+            .attr('hidden','hidden')
+            .end()
+            .find("#icon")
+            .prop('hidden',false)
+            .end()
+    })
+</script>

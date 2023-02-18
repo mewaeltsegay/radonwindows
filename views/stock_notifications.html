@@ -1,0 +1,66 @@
+<div id="faLoader">
+    <div class="spinner"></div>
+</div>
+<div class="bgc-white bd bdrs-3 p-20 mB-20" id="viewable" hidden>
+    <div class="row">
+        <div class="col text-left">
+            <h4 class="c-grey-900 mB-20">Notifications</h4>
+        </div>
+    </div>
+    <table id="dataTable" class="row-border table table-striped" cellspacing="0" width="100%">
+        <thead>
+        <tr>
+            <th>Item</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody ">
+        </tbody>
+    </table>
+</div>
+<script>
+    var ucwords = require('ucwords')
+
+    var table = $("#dataTable").DataTable({
+        "autoWidth": false,
+        "columnDefs": [
+            {
+                "targets": 0,
+                data: "item",
+                class: "font-weight-bold",
+                render: function (data,type,row,meta){
+                    var image
+                    if(row.picture === "") {
+                        image = "<div class=\"img-center text-center border rounded\" style=\"width: 40pt;height: 40pt\" id='imageHolder' data='0'> <i class=\"fas fa-camera pt-3 text-primary\" style=\"font-size: 16pt\"></i></div>"
+                    }
+                    else {
+                        image = "<img class='card-img ml-0 holder' src='"+ baseUrl + "/Items/images/thumbs/"+ row.picture +".jpg' id='imageHolder' data="+ row.picture +" style='width: 40pt;height: 40pt;display: block;margin-left: auto;margin-right: auto;border: 1px solid #ddd;border-radius: 4px;object-fit: cover;'>"
+                    }
+                    return `<div class="row">
+                                <div class="col-1">${image}</div>
+                                <div class="col-11">
+                                    <div class="row ml-1">${ucwords(data)}</div>
+                                    <div class="row ml-1"><span class="font-weight-normal">Qty: ${row.qty} ${ucwords(row.unit_name)}</span></div>
+                                    <div class="row ml-1"><span class="font-weight-normal">Reorder Level: ${row.reorder_level} ${ucwords(row.unit_name)}</span></div>
+                                </div>
+                            </div>`
+                }
+            },
+            {
+                targets: 1,
+                data: "status",
+                orderable: false,
+            }
+        ]
+    })
+
+    $.post(baseUrl + "/app/notifications.php",[],"json").done(data=> {
+        var notifications = JSON.parse(data)
+
+        if (notifications.success === "success") {
+            $('#faLoader').hide()
+            $('#viewable').prop('hidden',false)
+            table.rows.add(notifications.data).draw('false')
+        }
+    })
+</script>

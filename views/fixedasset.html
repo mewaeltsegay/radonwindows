@@ -1,0 +1,216 @@
+<div id="faLoader">
+    <div class="spinner"></div>
+</div>
+<div class="bgc-white bd bdrs-3 p-20 mB-20" id="viewable" hidden>
+    <div class="row">
+        <div class="col text-left">
+            <h4 class="c-grey-900 mB-20">Fixed Asset</h4>
+        </div>
+        <div class="col text-right" id="assetAdd">
+            <button type="button" onclick="handlePrinting()" id="print" class="btn btn-outline-primary"><i class="fas fa-print"></i></button>
+            <button type="button" onclick="handleExcel()" id="csv" class="btn btn-outline-success"><i class="fas fa-file-excel"></i></button>
+            <button type="button" class="btn cur-p btn-primary" onclick="$('#mainContent').load('views/import_from_csv.html');importFrom = 'fixed_Asset'">Import from CSV</button>
+        </div>
+    </div>
+    <table id="dataTable" class="row-border table table-striped" cellspacing="0" width="100%">
+        <thead>
+        <tr>
+            <th>Item</th>
+            <th>Location</th>
+            <th>Category</th>
+            <th>Unit Price</th>
+            <th>Qty</th>
+            <th>Unit Measure</th>
+            <th>Assigned To</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody ">
+        </tbody>
+    </table>
+</div>
+<script>
+    $(document).ready(()=>{
+        if($.inArray('add_item',permissions) === -1) {
+            $('#assetAdd').prop('hidden',true)
+        }
+    })
+    var ucwords = require("ucwords")
+
+    var table = $("#dataTable").DataTable({
+        "autoWidth": false,
+        "order": [[ 0, "asc" ]], //or desc
+        "columnDefs": [
+            {
+                "targets": 3,
+                data: "unit_price",
+                render: function (data){
+                    var formatter = new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                    })
+                    return formatter.format(data) + " NKF"
+                }
+            },{
+                "targets": 0,
+                data: "item",
+                class: "font-weight-bold",
+                render: function (data,type,row,meta){
+                    var image
+                    if(row.picture === "") {
+                        image = "<div class=\"img-center text-center border rounded\" style=\"width: 40pt;height: 40pt\" id='imageHolder' data='0'> <i class=\"fas fa-camera pt-3 text-primary\" style=\"font-size: 16pt\"></i></div>"
+                    }
+                    else {
+                        image = "<img class='card-img ml-0 holder' src='"+ baseUrl + "/Items/images/thumbs/"+ row.picture +".jpg' id='imageHolder' data="+ row.picture +" style='width: 40pt;height: 40pt;display: block;margin-left: auto;margin-right: auto;border: 1px solid #ddd;border-radius: 4px;object-fit: cover;'>"
+                    }
+                    return `<div class="row"><div class="col-3">${image}</div><div class="col-9">${ucwords(data)}</div></div>`
+                }
+            },{
+            targets: "_all",
+            render: function (data){
+                return ucwords(data)
+            }
+        },{
+            "targets": 1,
+            data: "location_name"
+        },{
+            "targets": 2,
+            data: "category_name"
+        },{
+            "targets": 4,
+            data: "quantity"
+        },{
+            "targets": 5,
+            data: "unit_name"
+        },{
+            "targets": 6,
+            data: "assigned_to"
+        }
+        ]
+    })
+
+    $.post(baseUrl+"/app/stock_fixedasset.php",[],"json").done((data)=>{
+        var jsonn = JSON.parse(data)
+
+        if(jsonn.success == 'success'){
+            $('#faLoader').hide()
+            $('#viewable').removeAttr('hidden')
+            table.rows.add(jsonn.data).draw(false)
+        }
+        else{
+            $('#faLoader').hide()
+            $('#viewable').removeAttr('hidden')
+        }
+    })
+
+
+    $('#dataTable tbody').on( 'click', 'tr', function () {
+        $("#mainContent").load("views/itemDetails.html")
+        detail = {
+            item: table.row(this).data().item,
+            location: table.row(this).data().location_name,
+            assigned_to: table.row(this).data().assigned_to,
+            type: "fixed asset"
+        }
+    } );
+
+    function handlePrinting() {
+        var moment = require('moment')
+        var formatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        })
+        jsonData = table.rows({order: 'applied',search: 'applied'}).data()
+        for (const i in jsonData) {
+            jsonData[i].unit_price = formatter.format(jsonData[i].unit_price) + " NKF"
+        }
+        printJS({
+            printable: jsonData,
+            properties: [
+                { field: 'item', displayName: 'Item'},
+                { field: 'location_name', displayName: 'Location'},
+                { field: 'category_name', displayName: 'Category'},
+                { field: 'unit_price', displayName: 'Unit Price'},
+                { field: 'quantity', displayName: 'Qty'},
+                { field: 'unit_name', displayName: 'Unit Measure'},
+                { field: 'assigned_to', displayName: 'Assigned To'},
+            ],
+            header: `<div class="row"><div class="col"><h3 class="m-0">Fixed Asset</h3></div></div>`,
+            style: `@page { size: A4 landscape}
+                          .row {
+                          display: -ms-flexbox;
+                          display: flex;
+                          -ms-flex-wrap: wrap;
+                              flex-wrap: wrap;
+                          }
+                          .col {
+                              -ms-flex-preferred-size: 0;
+                                  flex-basis: 0;
+                              -ms-flex-positive: 1;
+                                  flex-grow: 1;
+                              max-width: 100%;
+                            }
+                          td {
+                            text-transform: capitalize;
+                            margin-left: 1em
+                         }
+                         td:nth-child(5) {
+                            text-align: center
+                         }`,
+            type: 'json'
+        })
+    }
+
+    function handleExcel(){
+        const fs = require('fs');
+        const carbone = require('carbone');
+        var path = require('path')
+        var {remote} = require('electron'),
+            dialog = remote.dialog,
+            WIN = remote.getCurrentWindow();
+
+        jsonData = table.rows({order: 'applied',search: 'applied'}).data().toArray()
+        var data = {
+            tableData: jsonData
+        }
+        var options = {
+            "lang": "en-us",
+            "currency": {
+                "source": "USD",
+                "target": "USD",
+                "rates": {
+                    "EUR": 1,
+                    "USD": 2
+                }
+            }
+        }
+        let option = {
+            //Placeholder 1
+            title: "Save Report",
+
+            //Placeholder 2
+            defaultPath : remote.app.getPath("desktop")+"\\Assets.xlsx",
+
+            //Placeholder 4
+            buttonLabel : "Save Report",
+
+            //Placeholder 3
+            filters :[
+                {name: 'Excel', extensions: ['xlsx']},
+                {name: 'All Files', extensions: ['*']}
+            ]
+        }
+
+        //Synchronous
+        let filename = dialog.showSaveDialog(WIN, option)
+        filename.then(function (saveTo){
+            carbone.render(path.join(__dirname,'assets/static/templates/asset_template.xlsx'), data, options, function(err, result){
+                if (err) {
+                    return console.log(err);
+                }
+                // write the result
+                fs.writeFileSync(saveTo.filePath, result);
+                $('#ok').attr("data-type", "success").attr("data-message", "Excel file has been saved.").attr("data-title", "Success! ").click()
+            });
+        })
+    }
+</script>

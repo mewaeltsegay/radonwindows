@@ -1,0 +1,73 @@
+<div class="bgc-white bd bdrs-3 p-20 mB-20"><h4 class="c-grey-900 mB-20">Add User</h4>
+    <div class="card-body">
+        <form class="container" onsubmit="saveUser(event)" id="needs-validation" novalidate>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First Name" pattern="[a-zA-Z]" onkeyup="checkIfValid(this.id)" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last Name" required pattern="[a-zA-Z]" onkeyup="checkIfValid(this.id)" required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="user_name">User Name</label>
+                        <input type="text" class="form-control" id="user_name" name="user_name" placeholder="Username" pattern="[a-zA-Z]" onkeyup="checkIfValid(this.id)" required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="dept">Department</label>
+                        <select name="dept" id="dept" class="custom-select" onchange="checkIfSelectIsValid(this.id)" required>
+                            <option selected="selected" disabled="disabled">Select a Department</option>
+                            <script> getDepartments()</script>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="role">Roles</label>
+                        <select name="role" id="role" class="custom-select" onchange="checkIfSelectIsValid(this.id)" required>
+                            <option selected="selected" disabled="disabled">Select a Role</option>
+                            <script>getRoles()</script>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" min=8 onkeyup="checkIfPasswordValid(this.id)"required >
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="password2">Confirm Password</label>
+                        <input type="password" class="form-control" id="password2" name="password2" placeholder="Confirm Password" onkeyup="checkIfPassword2Valid()" required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col"></div>
+                <div class="col"></div>
+                <div class="col text-right">
+                    <button class="btn btn-primary" type="submit" id="users_save">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

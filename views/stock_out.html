@@ -1,0 +1,299 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="bgc-white bd bdrs-3 p-20 mB-20">
+            <h4 class="c-red-500 mB-20 border-bottom border-danger mb-3">Stock Out</h4>
+            <form id="stock_out_form" class="mb-3" onsubmit="submitStockOut(event)">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <select class="form-control" name="location" id="location" placeholder="Select Location" onchange="getQuantityByLocation($(this).val());$('#items').empty()" required>
+                            <option disabled selected>Select Location</option>
+                            <script>getLocations()</script>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <select class="form-control" name="type" id="type" placeholder="Select Transaction Type" onchange="showAssignedTo()" required>
+                            <option disabled selected value="">Select Transaction Type</option>
+                            <option>Consumed</option>
+                            <option>Donated</option>
+                            <option>Damaged</option>
+                            <option>Loaned</option>
+                            <option hidden>Permanently Move</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+            <div class="row">
+                <div class="col-md-6">
+                    <h4 class="c-grey-900 mB-20 bdB mb-3">Select Item</h4>
+                    <table id="dataTable" class="row-border table table-striped hover" cellspacing="0" width="100%">
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4 class="c-grey-900 mB-20 bdB mb-3">Item Out</h4>
+                    <table id="itemDatatable" class="table table-striped mb-5">
+                        <tbody id="items">
+                        </tbody>
+                    </table>
+                    <div class="bdB bdT" style="width:95%;position:absolute;bottom: 0px">
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <h6 class="c-grey-900"><span class="c-grey-500">Total    </span> Items: <span id="total_items">0</span></h6>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-right"><span class="text-right">Total:-<span id="total_out" class="text-danger">0</span></span></h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <div class="row">
+                        <div class="col">
+                            <input id="siv" name="siv" form="stock_out_form" class="form-control" type="number" placeholder="SIV Number" required>
+                        </div>
+                        <div class="col">
+                            <input id="requisition" name="requisition" form="stock_out_form" class="form-control" type="number" placeholder="Requisition Number" required>
+                        </div>
+                        <div class="col" hidden>
+                            <select id="dept" name="dept" form="stock_out_form" class="form-control" onchange="getEmployeesByDepartment('#assigned_to',$('#dept option:selected').attr('id'))" disabled required>
+                                <option disabled selected value="">Department</option>
+                                <script>getDepartments()</script>
+                            </select>
+                        </div>
+                        <div class="col" hidden>
+                            <select id="assigned_to" name="assigned_to" form="stock_out_form" class="form-control" disabled required>
+                                <option disabled selected value="">Recipient</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <textarea id="remark" form="stock_out_form" class="form-control" placeholder="Remark"></textarea>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <button form="stock_out_form" class="btn btn-primary" type="submit" id="submit" disabled>Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var table = $('#dataTable').DataTable({
+        info: false,
+        rowId: "id",
+        columnDefs: [
+            {
+                targets: "_all",
+                class: "font-weight-bold"
+            },
+            {
+                "targets": 0,
+                visible: false,
+                searchable: false,
+                "data": "id"
+            },
+            {
+                targets: 1,
+                width: "80%",
+                data: "item"
+            },
+            {
+                targets: 2,
+                width: "20%",
+                data: "quantity"
+            }
+        ]
+    })
+
+    $('#dataTable').on('click', 'tr', function() {
+        var row = table.row(this);
+        var init_quantity = Number(table.row(this).data().quantity.split("<")[0])
+        if(!$('input[data='+table.row(this).data().id+"]").length == 0){
+            if(Number($('input[data='+table.row(this).data().id+"]").val()) < init_quantity){
+                var init = Number($('input[data='+table.row(this).data().id+"]").val())
+                init = init + 1
+                $('input[data='+table.row(this).data().id+"]").val(init)
+
+                $("#extra_"+table.row(this).data().id).html("-"+init)
+
+                var values = $("#items").find("input").map(function() { return Number($(this).val())}).get()
+                $("#total_out").html(values.reduce((a, b) => { return a + b}))
+
+                $("#submit").removeAttr("disabled")
+            }
+        }
+        else{
+            if(Number(table.row(this).data().quantity.split("<")[0]) > 0) {
+                $("#items").append(` <tr class="row">
+                            <td class="text-left mt-2 col-8 border-0">
+                                ${$(this).children('td:first').html()}
+                            </td>
+                            <td class="text-right col-4">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <input form="stock_in_form" data="${table.row(this).data().id}" max="${table.row(this).data().quantity.split("<")[0]}" min="1" onchange="updateQuantity(this)" class="form-control" type="number" value="1">
+                                    </div>
+                                    <div class="col-3 mt-2">
+                                        <button data="${table.row(this).data().id}" class="p-0 m-0 border-0 bg-transparent" onclick="removeRow(this)"><i class="text-danger fa fa-window-close"></i></button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>`)
+                $("#total_items").html($("#items tr").length)
+                var rowData = table.row(this).data()
+                rowData.quantity = rowData.quantity.split("<")[0] + "<span class='text-danger' id='extra_" + table.row(this).data().id + "'>-" + Number($('input[data=' + table.row(this).data().id + ']').val()) + "</span>"
+                table.row(this).data(rowData)
+
+                var values = $("#items").find("input").map(function () {
+                    return Number($(this).val())
+                }).get()
+                $("#total_out").html(values.reduce((a, b) => {
+                    return a + b
+                }))
+
+                $("#submit").removeAttr("disabled")
+            }
+        }
+
+    })
+
+    function updateQuantity(element){
+        $("#extra_"+$(element).attr("data")).html("-"+$(element).val())
+    }
+
+    function getQuantityByLocation(location) {
+        $.post(baseUrl + "/app/stock_in.php", {location: location}, "json").done((data) => {
+            var jsonn = JSON.parse(data)
+
+            if (jsonn.success = "success") {
+                table.clear().draw()
+                table.rows.add(jsonn.data).draw(false)
+            }
+        })
+    }
+
+    function removeRow(element){
+        $(element).parents('tr').remove()
+        $("#total_items").html($("#items tr").length)
+
+        var rowData = table.row('#'+$(element).attr('data')).data()
+        rowData.quantity = rowData.quantity.split("-")[0]
+        table.row('#'+$(element).attr('data')).data(rowData)
+
+        if($("#items tr").length == 0){
+            $("#submit").attr("disabled","disabled")
+            $("#total_out").html("0")
+        }
+        else{
+            var values = $("#items").find("input").map(function() { return Number($(this).val())}).get()
+            $("#total_out").html(values.reduce((a, b) => { return a + b}))
+        }
+        // console.log($(element).closest('input').attr('data'))
+    }
+
+    function showAssignedTo(){
+        if($("#type option:selected").html() === "Permanently Move" | $("#type option:selected").html() === "Consumed"){
+            $('#assigned_to,#dept').prop('disabled',false).parent('div').prop('hidden',false);
+            $('#siv').prop('disabled', false).parent('div').prop('hidden', false)
+            $("#requisition").prop('disabled', false).parent('div').prop('hidden', false)
+        }
+        else if($("#type option:selected").html() === "Loaned"){
+            $('#assigned_to,#dept').prop('disabled',false).parent('div').prop('hidden',false);
+            $('#siv').prop('disabled', true).parent('div').prop('hidden', true)
+            $("#requisition").prop('disabled', true).parent('div').prop('hidden', true)
+        }
+        else{
+            if($("#type option:selected").html() !== "Damaged") {
+                $('#assigned_to,#dept').prop('disabled', true).parent('div').prop('hidden', true)
+                $('#siv').prop('disabled', false).parent('div').prop('hidden', false)
+                $("#requisition").prop('disabled', false).parent('div').prop('hidden', false)
+            }
+            else{
+                $('#assigned_to,#dept').prop('disabled',true).parent('div').prop('hidden',true)
+                $('#siv').prop('disabled', true).parent('div').prop('hidden', true)
+                $("#requisition").prop('disabled', true).parent('div').prop('hidden', true)
+            }
+
+        }
+    }
+
+
+    function submitStockOut(event){
+        event.preventDefault()
+
+        var location_id = $("#location option:selected").attr('id')
+
+        var send
+
+        switch ($("#type option:selected").html()){
+            case "Consumed":
+                var values = $("#items").find("input").map(function() {
+                    return { item_id: $(this).attr('data'),location_id: location_id, quantity: Number($(this).val()), siv_no: $("#siv").val(),requisition: $('#requisition').val(),dept_id: $('#dept option:selected').attr('id'),employee_id: $('#assigned_to option:selected').attr('id'),type: "'"+$("#type").val()+"'",remark: "'"+$("#remark").val()+"'", created_by: "'"+$("#userProfileName").attr('uuid')+"'" }
+                }).get()
+                send = {
+                    table: "transaction_out",
+                    fields: ["item_id","location_id","quantity","siv_no","requisition","dept_id","employee_id","type","remark","created_by"],
+                    rows: values
+                }
+                break
+            case "Loaned":
+                var values = $("#items").find("input").map(function() {
+                    return { item_id: $(this).attr('data'),location_id: location_id, quantity: Number($(this).val()), dept_id: $('#dept option:selected').attr('id'),employee_id: $('#assigned_to option:selected').attr('id'),type: "'"+$("#type").val()+"'",remark: "'"+$("#remark").val()+"'", created_by: "'"+$("#userProfileName").attr('uuid')+"'" }
+                }).get()
+                send = {
+                    table: "transaction_out",
+                    fields: ["item_id","location_id","quantity","dept_id","employee_id","type","remark","created_by"],
+                    rows: values
+                }
+                break
+            case "Donated":
+                var values = $("#items").find("input").map(function() {
+                    return { item_id: $(this).attr('data'),location_id: location_id, quantity: Number($(this).val()), siv_no: $("#siv").val(),requisition: $('#requisition').val(),type: "'"+$("#type").val()+"'",remark: "'"+$("#remark").val()+"'", created_by: "'"+$("#userProfileName").attr('uuid')+"'" }
+                }).get()
+                send = {
+                    table: "transaction_out",
+                    fields: ["item_id","location_id","quantity","siv_no","requisition","type","remark","created_by"],
+                    rows: values
+                }
+                break
+            case "Damaged":
+                var values = $("#items").find("input").map(function() {
+                    return { item_id: $(this).attr('data'),location_id: location_id, quantity: Number($(this).val()),type: "'"+$("#type").val()+"'",remark: "'"+$("#remark").val()+"'", created_by: "'"+$("#userProfileName").attr('uuid')+"'" }
+                }).get()
+                send = {
+                    table: "transaction_out",
+                    fields: ["item_id","location_id","quantity","type","remark","created_by"],
+                    rows: values
+                }
+                break
+            case "Permanently Move":
+                var values = $("#items").find("input").map(function() {
+                    return { item_id: $(this).attr('data'),location_id: location_id, quantity: Number($(this).val()), siv_no: $("#siv").val(),requisition: $('#requisition').val(),employee_id: $('#assigned_to option:selected').attr('id'),type: "'"+$("#type").val()+"'",remark: "'"+$("#remark").val()+"'", created_by: "'"+$("#userProfileName").attr('uuid')+"'" }
+                }).get()
+                send = {
+                    table: "transaction_out",
+                    fields: ["item_id","location_id","quantity","siv_no","requisition","employee_id","type","remark","created_by"],
+                    rows: values
+                }
+                break
+        }
+
+        $.post(baseUrl+"/app/stock_insert.php",send,"json").done((data)=>{
+            var jsonn = JSON.parse(data)
+
+            if(jsonn.success == "success"){
+                $('#ok').attr("data-type", "success").attr("data-message", "Successfully added stock.").attr("data-title", "Success! ").click()
+                $("#mainContent").load("views/stock_out.html")
+            }
+            else{
+                $('#ok').attr("data-type", "danger").attr("data-message", jsonn.message).attr("data-title", "Failure! ").click()
+            }
+        })
+
+    }
+</script>

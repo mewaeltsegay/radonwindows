@@ -1,0 +1,107 @@
+<div id="faLoader">
+    <div class="spinner"></div>
+</div>
+<div class="bgc-white bd bdrs-3 p-20 mB-20" id="viewable" hidden>
+    <div class="row">
+        <div class="col text-left">
+            <h4 class="c-grey-900 mB-20">Loans</h4>
+        </div>
+    </div>
+    <table id="dataTable" class="row-border table table-striped" cellspacing="0" width="100%">
+        <thead>
+        <tr>
+            <th>Employee</th>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Unit Measure</th>
+            <th>Date</th>
+            <th>Remark</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody id="tableBody ">
+        </tbody>
+    </table>
+</div>
+<script>
+    var ucwords = require("ucwords")
+    var moment = require('moment')
+
+    var table = $("#dataTable").DataTable({
+        "autoWidth": false,
+        "order": [[ 0, "asc" ]], //or desc
+        "columnDefs": [
+            {
+                "targets": 0,
+                data: "employee",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 1,
+                data: "item",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 2,
+                data: "quantity"
+            },{
+                "targets": 3,
+                data: "unit_name",
+                render: function (data){
+                    return ucwords(data)
+                }
+            },{
+                "targets": 4,
+                data: "date",
+                render: function (data){
+                    return moment(data).format('DD/MM/YYYY')
+                }
+            },{
+                "targets": 5,
+                data: "remark"
+            },{
+                "targets": 6,
+                data: "id",
+                class: "text-center",
+                render: function (data){
+                    return `<button class="btn btn-success" id="${data}">Return</button>`
+                }
+            }
+        ]
+    })
+
+    $.post(baseUrl+"/app/stock_loans.php",[],"json").done((data)=>{
+        var jsonn = JSON.parse(data)
+
+        if(jsonn.success == 'success'){
+            $('#faLoader').hide()
+            $('#viewable').removeAttr('hidden')
+            table.rows.add(jsonn.data).draw(false)
+        }
+        else{
+            $('#faLoader').hide()
+            $('#viewable').removeAttr('hidden')
+        }
+    })
+
+    $('#dataTable tbody').on( 'click', 'button', function () {
+        send = {
+            table: "transaction_out",
+            id: this.id
+        }
+
+        $.post(baseUrl+"/app/delete.php",send,"json").done((data)=>{
+            var jsonn = JSON.parse(data)
+
+            if(jsonn.success == "true"){
+                table.row($(this).parents('tr')).remove().draw(false)
+                $('#ok').attr("data-type", "success").attr("data-message", "Item Returned.").attr("data-title", "Success! ").click()
+            }
+            else{
+                $('#ok').attr("data-type", "danger").attr("data-message", jsonn.message).attr("data-title", "Failure! ").click()
+            }
+        })
+    } );
+</script>
